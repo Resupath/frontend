@@ -46,14 +46,14 @@ export const Sidebar: FC<{}> = ({}) => {
             {!width && (
                 <button
                     onClick={() => setWidth(calculateWidth(width > 0))}
-                    className="fixed left-4 top-4 p-2 bg-white dark:bg-black transition-all duration-300 ease-in-out hover:bg-gray-200 dark:hover:bg-gray-700 dark:border-gray-800"
+                    className="fixed left-4 top-4 p-2 transition-all duration-300 ease-in-out hover:bg-gray-200 dark:hover:bg-gray-700 dark:border-gray-800"
                 >
                     <FiChevronsRight />
                 </button>
             )}
             <aside
                 style={{ width: `${width}px` }}
-                className="h-full bg-gray-100 dark:bg-black flex flex-col transition-all duration-300 ease-in-out overflow-hidden border-r border-gray-200 dark:border-gray-800"
+                className="h-full bg-foreground flex flex-col transition-all duration-300 ease-in-out overflow-hidden border-r border-gray-200 dark:border-gray-800"
             >
                 <div className="w-full px-4 py-4 flex flex-row justify-between items-center">
                     <span className="text-xl font-bold">Resupath</span>

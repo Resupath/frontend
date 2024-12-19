@@ -10,7 +10,7 @@ const Home: FC<{
     children: React.ReactNode;
 }> = ({ children }) => {
     return (
-        <div className="w-screen h-screen">
+        <div className="w-screen h-screen text-text">
             <div className="w-full h-full flex flex-row">
                 <Sidebar />
                 <div className="w-full h-full flex flex-col">

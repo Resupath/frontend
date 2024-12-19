@@ -17,7 +17,7 @@ const Header: FC = () => {
     }, [theme]);
 
     return (
-        <header className="w-full bg-white dark:bg-black text-black dark:text-white border-b border-solid border-gray-200 dark:border-gray-800">
+        <header className="w-full bg-white dark:bg-background text-black dark:text-white border-b border-solid border-gray-200 dark:border-gray-800">
             <div className="flex flex-row-reverse items-center justify-between px-4 py-4 w-full">
                 <button
                     onClick={toggleTheme}
