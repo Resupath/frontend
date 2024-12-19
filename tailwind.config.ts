@@ -11,8 +11,13 @@ export default {
     theme: {
         extend: {
             colors: {
+                primary: "var(--primary)",
+                secondary: "var(--secondary)",
                 background: "var(--background)",
                 foreground: "var(--foreground)",
+                text: "var(--text)",
+                "card-bg": "var(--card-bg)",
+                "card-fg": "var(--card-fg)",
             },
         },
     },

@@ -3,19 +3,29 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    /* 라이트 모드 기본 색상 */
+    --primary: #2563eb;
+    --secondary: #4f46e5;
+    --background: #ffffff;
+    --foreground: #020617;
+    --card-bg: #f1f5f9;
+    --card-fg: #1e293b;
+    --text: #1e293b;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+    /* 다크 모드 색상 */
+    --primary: #3b82f6;
+    --secondary: #6366f1;
+    --background: #191919;
+    --foreground: #202020;
+    --card-bg: #1e293b;
+    --card-fg: #f1f5f9;
+    --text: #f1f5f9;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+    color: var(--foreground);
+    background: var(--background);
+    font-family: Arial, Helvetica, sans-serif;
 }
