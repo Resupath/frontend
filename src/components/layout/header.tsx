@@ -18,10 +18,7 @@ const Header: FC = () => {
 
     return (
         <header className="w-full bg-white dark:bg-black text-black dark:text-white border-b border-solid border-gray-200 dark:border-gray-800">
-            <div className="container flex items-center justify-between px-4 py-4 mx-auto w-full">
-                <div className="flex-1">
-                    <span className="text-xl font-bold">Resupath</span>
-                </div>
+            <div className="flex flex-row-reverse items-center justify-between px-4 py-4 w-full">
                 <button
                     onClick={toggleTheme}
                     className="p-2 transition-colors rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
