@@ -56,7 +56,7 @@ export const Modal: FC<IProps> & {
         >
             <div
                 onClick={(e) => e.stopPropagation()}
-                className={`bg-background text-text w-1/2
+                className={`bg-background text-text w-auto
                     transition-all duration-200 ease-in-out
                     ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
             >
