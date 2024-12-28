@@ -1,8 +1,13 @@
 "use client";
+
 import React, { FC, useState } from "react";
+import { FaUserCircle } from "react-icons/fa";
 import { FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
-import * as E from "fp-ts/Either";
+import { useAuthStore } from "@/src/stores/useAuthStore";
 import { pipe } from "fp-ts/lib/function";
+
+import * as E from "fp-ts/Either";
+import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
 
 /**
  * @author bkdragon
@@ -10,6 +15,11 @@ import { pipe } from "fp-ts/lib/function";
  **/
 
 export const Sidebar: FC<{}> = ({}) => {
+    const { setIsOpen } = useLoginModalStore();
+    const { checkLogin, clearAuth } = useAuthStore((state) => state);
+
+    const isLogin = checkLogin();
+
     const [width, setWidth] = useState(250);
 
     const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -68,7 +78,28 @@ export const Sidebar: FC<{}> = ({}) => {
                 </div>
 
                 <div className="w-full flex flex-row flex-1">
-                    <div className="flex-1 p-4">content</div>
+                    <div className="flex-1 p-4 h-full flex flex-col">
+                        <div className="mt-auto w-full flex flex-col justify-center items-center gap-2">
+                            {isLogin && (
+                                <>
+                                    <FaUserCircle className="text-4xl" />
+                                    <button
+                                        onClick={() => {
+                                            clearAuth();
+                                        }}
+                                        className="text-sm"
+                                    >
+                                        로그아웃
+                                    </button>
+                                </>
+                            )}
+                            {!isLogin && (
+                                <button onClick={() => setIsOpen(true)} className="text-sm">
+                                    로그인
+                                </button>
+                            )}
+                        </div>
+                    </div>
                     <div
                         onMouseDown={handleResize}
                         className="w-1 cursor-ew-resize   bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700"
