@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type AuthState = {
     id?: string;
@@ -26,11 +26,17 @@ export const useAuthStore = create(
         (set, get) => ({
             user: initialState,
             setAuth: (auth) => set({ user: auth }),
-            clearAuth: () => set({ user: {} }),
+            clearAuth: () =>
+                set({
+                    user: {
+                        userToken: get().user.userToken,
+                    },
+                }),
             checkLogin: () => !!get()?.user?.id,
         }),
         {
             name: "auth-storage",
+            storage: createJSONStorage(() => sessionStorage),
         }
     )
 );

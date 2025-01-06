@@ -29,7 +29,7 @@ export default async function RootLayout({
     const theme = (cookieStore.get("theme")?.value as "dark" | "light") || "light";
 
     return (
-        <html lang="en" className={theme}>
+        <html lang="ko" className={theme}>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <ThemeStoreProvider initialTheme={theme}>
                     <Home>{children}</Home>

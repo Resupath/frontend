@@ -1,11 +1,12 @@
 "use client";
 
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import { Modal } from "../modal/Modal";
 import { api } from "@/src/utils/api";
 import { AxiosResponse } from "axios";
 import { pipe } from "fp-ts/lib/function";
 import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
+import { useAuthStore } from "@/src/stores/useAuthStore";
 
 import * as TE from "fp-ts/TaskEither";
 
@@ -15,7 +16,22 @@ import * as TE from "fp-ts/TaskEither";
  **/
 
 export const Global: FC<{}> = () => {
+    const { setAuth } = useAuthStore();
     const { isOpen, setIsOpen } = useLoginModalStore();
+
+    const getUserToken = () =>
+        pipe(
+            TE.tryCatch(
+                () =>
+                    api.get<{
+                        accessToken: string;
+                    }>("/auth/user"),
+                (error) => new Error("유저 토큰 발급 실패")
+            ),
+            TE.map((res) => res.data.accessToken),
+            TE.map((accessToken) => setAuth({ userToken: accessToken })),
+            TE.mapLeft((error) => console.error(error))
+        )();
 
     const tryGoogleLogin = () =>
         pipe(
@@ -31,6 +47,11 @@ export const Global: FC<{}> = () => {
         const redirectUrl = response.data;
         window.location.href = redirectUrl;
     };
+
+    useEffect(() => {
+        getUserToken();
+    }, []);
+
     return (
         <>
             {/* 로그인 모달 */}

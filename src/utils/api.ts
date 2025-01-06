@@ -1,17 +1,25 @@
 import axios from "axios";
 
+import { useAuthStore } from "@/src/stores/useAuthStore";
+
 export const api = axios.create({
     baseURL: "http://localhost:3000",
 });
 
-axios.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use((config) => {
+    const { user } = useAuthStore.getState();
+
+    if (user.accessToken) {
+        config.headers["X-Member"] = `Bearer ${user.accessToken}`;
     }
+
+    if (user.userToken) {
+        config.headers["X-User"] = `Bearer ${user.userToken}`;
+    }
+
     return config;
 });
 
-axios.interceptors.response.use((response) => {
+api.interceptors.response.use((response) => {
     return response;
 });
