@@ -5,6 +5,7 @@ import { FaUserCircle } from "react-icons/fa";
 import { FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 import { pipe } from "fp-ts/lib/function";
+import { useRouter } from "next/navigation";
 
 import * as E from "fp-ts/Either";
 import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
@@ -15,6 +16,7 @@ import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
  **/
 
 export const Sidebar: FC<{}> = ({}) => {
+    const router = useRouter();
     const { setIsOpen } = useLoginModalStore();
     const { checkLogin, clearAuth } = useAuthStore((state) => state);
 
@@ -66,7 +68,9 @@ export const Sidebar: FC<{}> = ({}) => {
                 className="h-full bg-foreground flex flex-col transition-all duration-300 ease-in-out overflow-hidden border-r border-gray-200 dark:border-gray-800"
             >
                 <div className="w-full px-4 py-4 flex flex-row justify-between items-center">
-                    <span className="text-xl font-bold">Resupath</span>
+                    <button onClick={() => router.push("/")} className="text-xl font-bold">
+                        Resupath
+                    </button>
                     <button
                         onClick={() => {
                             setWidth(calculateWidth(width > 0));
@@ -82,10 +86,16 @@ export const Sidebar: FC<{}> = ({}) => {
                         <div className="mt-auto w-full flex flex-col justify-center items-center gap-2">
                             {isLogin && (
                                 <>
-                                    <FaUserCircle className="text-4xl" />
+                                    <button
+                                        onClick={() => router.push("/mypage")}
+                                        className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity"
+                                    >
+                                        <FaUserCircle className="text-4xl" />
+                                    </button>
                                     <button
                                         onClick={() => {
                                             clearAuth();
+                                            router.push("/");
                                         }}
                                         className="text-sm"
                                     >
