@@ -16,7 +16,7 @@ import * as TE from "fp-ts/TaskEither";
  **/
 
 export const Global: FC<{}> = () => {
-    const { setAuth } = useAuthStore();
+    const { setAuth, user } = useAuthStore();
     const { isOpen, setIsOpen } = useLoginModalStore();
 
     const getUserToken = () =>
@@ -49,8 +49,10 @@ export const Global: FC<{}> = () => {
     };
 
     useEffect(() => {
-        getUserToken();
-    }, []);
+        if (!user?.userToken) {
+            getUserToken();
+        }
+    }, [user?.userToken]);
 
     return (
         <>
