@@ -9,6 +9,7 @@ import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 
 import * as TE from "fp-ts/TaskEither";
+import AlertModal from "../modal/AlertModal";
 
 /**
  * @author bkdragon
@@ -92,6 +93,7 @@ export const Global: FC<{}> = () => {
                     </div>
                 </Modal.Body>
             </Modal>
+            <AlertModal />
         </>
     );
 };
