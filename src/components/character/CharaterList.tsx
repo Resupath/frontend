@@ -1,15 +1,22 @@
 "use client";
 
+import React, { FC, useEffect, useState } from "react";
 import { Character, listCharacters } from "@/src/types/character";
 import { pipe } from "fp-ts/lib/function";
-import React, { FC, useEffect, useState } from "react";
+import { FiChevronsRight, FiSearch, FiUser } from "react-icons/fi";
+import type { Pagination } from "@/src/types/pagination";
+import { Pagination as PaginationComponent } from "@/src/components/common/Pagination";
+import { createRoom } from "@/src/types/room";
+import CharacterCard from "./CharacterCard";
+import { useRouter } from "next/navigation";
+import { useRoomStore } from "@/src/stores/useRoomStore";
+
 import * as TE from "fp-ts/TaskEither";
 import * as O from "fp-ts/Option";
-import { FiChevronsRight, FiSearch, FiUser } from "react-icons/fi";
-import { Pagination } from "@/src/types/pagination";
-import CharacterCard from "./CharacterCard";
 
 export const CharacterList: FC<{}> = () => {
+    const router = useRouter();
+    const { asyncListRooms: refreshRooms } = useRoomStore((state) => state);
     const [characters, setCharacters] = useState<Pagination<Character>>({
         data: [],
         meta: {
@@ -22,6 +29,7 @@ export const CharacterList: FC<{}> = () => {
     const [selectedCharacter, setSelectedCharacter] = useState<O.Option<Character>>(O.none);
     const [sidebarWidth, setSidebarWidth] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
 
     const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
         const startX = e.clientX;
@@ -42,10 +50,13 @@ export const CharacterList: FC<{}> = () => {
         document.addEventListener("mouseup", handleMouseUp);
     };
 
-    const asyncListCharacters = async () =>
+    const asyncListCharacters = async (page: number = 1) =>
         pipe(
-            listCharacters(),
-            TE.map((characters) => setCharacters(characters)),
+            listCharacters(page),
+            TE.map((characters) => {
+                setCharacters(characters);
+                setCurrentPage(page);
+            }),
             TE.mapLeft((error) => console.error(error))
         )();
 
@@ -54,21 +65,36 @@ export const CharacterList: FC<{}> = () => {
         setSidebarWidth(384);
     }
 
-    useEffect(() => {
-        asyncListCharacters();
-    }, []);
+    const asyncCreateRoom = async (characterId: Character["id"]) =>
+        pipe(
+            createRoom(characterId),
+            TE.map((room) => {
+                refreshRooms();
+                router.push(`/room/${room.data.id}`);
+            }),
+            TE.mapLeft((error) => console.error(error))
+        )();
 
-    const filteredCharacters = characters.data.filter((character) =>
+    useEffect(() => {
+        asyncListCharacters(currentPage);
+    }, [currentPage]);
+
+    const filteredCharacters = characters.data.filter((character: Character) =>
         character.nickname.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    // 검색어가 변경될 때마다 첫 페이지로 돌아가기
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+
     return (
-        <div className="flex">
+        <div className="flex w-full h-full">
             <div
                 style={{ width: `calc(100% - ${sidebarWidth}px)` }}
-                className={`transition-[width] duration-300 ease-in-out w-full`}
+                className={`transition-[width] duration-300 ease-in-out h-full`}
             >
-                <div className="mx-auto px-4 py-8 max-w-7xl">
+                <div className="mx-auto px-4 py-8 max-w-7xl flex flex-col h-full">
                     {/* 검색 바 */}
                     <div className="mb-8">
                         <div className="relative max-w-md mx-auto">
@@ -88,10 +114,22 @@ export const CharacterList: FC<{}> = () => {
                     </div>
 
                     {/* 캐릭터 그리드 */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                        {filteredCharacters.map((character) => (
+                    <div
+                        style={{
+                            flex: 1,
+                            gridAutoRows: "250px",
+                        }}
+                        className="grid grid-cols-2 md:grid-cols-4 gap-6 overflow-y-auto"
+                    >
+                        {filteredCharacters.map((character: Character) => (
                             <CharacterCard key={character.id} character={character} onClick={handleCharacterClick} />
                         ))}
+                    </div>
+                    <div className="mt-auto">
+                        <PaginationComponent
+                            meta={characters.meta}
+                            onPageChange={(page) => asyncListCharacters(page)}
+                        />
                     </div>
                 </div>
             </div>
@@ -211,7 +249,10 @@ export const CharacterList: FC<{}> = () => {
                                         <button className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                                             커피챗하기
                                         </button>
-                                        <button className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                                        <button
+                                            onClick={() => asyncCreateRoom(character.id)}
+                                            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                        >
                                             면접 진행하기
                                         </button>
                                     </div>

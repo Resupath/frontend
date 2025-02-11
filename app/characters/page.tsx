@@ -54,7 +54,7 @@ export default function CharactersPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {characters.data.map((character) => (
-                        <div key={character.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                        <div key={character.id} className="bg-surface rounded-lg shadow-md p-6">
                             <div className="flex items-center justify-center w-full h-40 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4">
                                 {character.image ? (
                                     <img

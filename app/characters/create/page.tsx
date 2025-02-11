@@ -12,7 +12,9 @@ import { listExperiences } from "@/src/types/experience";
 import { CharacterCreateRequest, createCharacter } from "@/src/types/character";
 import { Listbox } from "@headlessui/react";
 import SelectionModal from "@/src/components/modal/SelectionModal";
-
+import { uploadFile } from "@/src/types/file";
+import { validateForm, required, minLength, maxLength, url, minItems } from "@/src/utils/validation";
+import { checkNotionUrl } from "@/src/utils/notion";
 interface InputField {
     id: string;
     value: string;
@@ -25,6 +27,19 @@ interface SourceField {
     url: string;
 }
 
+interface ValidationErrors {
+    [key: string]: string;
+}
+
+const isValidUrl = (urlString: string): boolean => {
+    try {
+        new URL(urlString);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
 export default function CreateCharacterPage() {
     const router = useRouter();
     const [personalities, setPersonalities] = useState<Personality[]>([]);
@@ -33,7 +48,15 @@ export default function CreateCharacterPage() {
     const [selectedExperiences, setSelectedExperiences] = useState<Experience[]>([]);
     const [positions, setPositions] = useState<InputField[]>([{ id: "", value: "" }]);
     const [skills, setSkills] = useState<InputField[]>([{ id: "", value: "" }]);
-    const [sources, setSources] = useState<SourceField[]>([{ id: "", type: "link", subtype: "", url: "" }]);
+
+    // source
+    const [resumes, setResumes] = useState<SourceField[]>([
+        { id: Date.now().toString(), type: "link", subtype: "resume", url: "" },
+    ]);
+    const [portfolios, setPortfolios] = useState<SourceField[]>([
+        { id: Date.now().toString(), type: "link", subtype: "portfolio", url: "" },
+    ]);
+
     const [nickname, setNickname] = useState("");
     const [isPublic, setIsPublic] = useState(true);
     const [image, setImage] = useState<string | null>(null);
@@ -44,6 +67,8 @@ export default function CreateCharacterPage() {
     const [experienceModalOpen, setExperienceModalOpen] = useState(false);
     const [tempSelectedPersonalities, setTempSelectedPersonalities] = useState<Personality[]>([]);
     const [tempSelectedExperiences, setTempSelectedExperiences] = useState<Experience[]>([]);
+
+    const [errors, setErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
         // 성격 목록 조회
@@ -80,16 +105,201 @@ export default function CreateCharacterPage() {
         setter: React.Dispatch<React.SetStateAction<InputField[]>>,
         currentFields: InputField[],
         id: string,
-        value: string
+        value: string,
+        fieldType: "position" | "skill"
     ) => {
-        setter(currentFields.map((field) => (field.id === id ? { ...field, value } : field)));
+        const newFields = currentFields.map((field) => (field.id === id ? { ...field, value } : field));
+        setter(newFields);
+
+        // Validate each field
+        const newErrors: ValidationErrors = { ...errors };
+        newFields.forEach((field, index) => {
+            if (!field.value.trim()) {
+                newErrors[`${fieldType}_${index}`] = `${fieldType === "position" ? "포지션" : "스킬"}을 입력해주세요`;
+            } else {
+                delete newErrors[`${fieldType}_${index}`];
+            }
+        });
+        setErrors(newErrors);
     };
 
-    const handleSourceChange = (id: string, field: keyof SourceField, value: string) => {
-        setSources(sources.map((source) => (source.id === id ? { ...source, [field]: value } : source)));
+    const handleSourceChange = (id: string, field: keyof SourceField, value: string, type: "resume" | "portfolio") => {
+        const newSources =
+            type === "resume"
+                ? resumes.map((resume) =>
+                      resume.id === id
+                          ? {
+                                ...resume,
+                                [field]: value,
+                                // type이 변경될 때 url 초기화
+                                ...(field === "type" && { url: "" }),
+                            }
+                          : resume
+                  )
+                : portfolios.map((portfolio) =>
+                      portfolio.id === id
+                          ? {
+                                ...portfolio,
+                                [field]: value,
+                                // type이 변경될 때 url 초기화
+                                ...(field === "type" && { url: "" }),
+                            }
+                          : portfolio
+                  );
+
+        if (type === "resume") {
+            setResumes(newSources);
+        } else {
+            setPortfolios(newSources);
+        }
+
+        // Validate URL
+        if (field === "url") {
+            const newErrors: ValidationErrors = { ...errors };
+            const sourceIndex = newSources.findIndex((s) => s.id === id);
+
+            if (!value.trim()) {
+                newErrors[`${type}_${sourceIndex}`] = `${
+                    type === "resume" ? "이력서" : "포트폴리오"
+                } URL을 입력해주세요`;
+            } else if (!isValidUrl(value)) {
+                newErrors[`${type}_${sourceIndex}`] = "올바른 URL 형식이 아닙니다";
+            } else {
+                delete newErrors[`${type}_${sourceIndex}`];
+            }
+
+            setErrors(newErrors);
+        }
+    };
+
+    const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newNickname = e.target.value;
+        setNickname(newNickname);
+
+        const nicknameRules = [
+            required("닉네임을 입력해주세요"),
+            minLength(2, "닉네임은 2자 이상 입력해주세요"),
+            maxLength(20, "닉네임은 20자까지 입력 가능합니다"),
+        ];
+
+        const result = validateForm({ nickname: newNickname }, { nickname: nicknameRules });
+        const newErrors = { ...errors };
+        if (result.nickname.isValid) {
+            delete newErrors.nickname;
+        } else {
+            newErrors.nickname = result.nickname.message;
+        }
+        setErrors(newErrors);
+    };
+
+    const handlePersonalitiesChange = (newPersonalities: Personality[]) => {
+        setTempSelectedPersonalities(newPersonalities);
+    };
+
+    const handleExperiencesChange = (newExperiences: Experience[]) => {
+        setTempSelectedExperiences(newExperiences);
+    };
+
+    const handlePersonalitiesConfirm = () => {
+        setSelectedPersonalities(tempSelectedPersonalities);
+        const result = validateForm(
+            { selectedPersonalities: tempSelectedPersonalities },
+            { selectedPersonalities: [minItems(1, "최소 1개 이상의 성격을 선택해주세요")] }
+        );
+        const newErrors = { ...errors };
+        if (result.selectedPersonalities.isValid) {
+            delete newErrors.selectedPersonalities;
+        } else {
+            newErrors.selectedPersonalities = result.selectedPersonalities.message;
+        }
+        setErrors(newErrors);
+        setPersonalityModalOpen(false);
+    };
+
+    const handleExperiencesConfirm = () => {
+        setSelectedExperiences(tempSelectedExperiences);
+        const result = validateForm(
+            { selectedExperiences: tempSelectedExperiences },
+            { selectedExperiences: [minItems(1, "최소 1개 이상의 경험을 선택해주세요")] }
+        );
+        const newErrors = { ...errors };
+        if (result.selectedExperiences.isValid) {
+            delete newErrors.selectedExperiences;
+        } else {
+            newErrors.selectedExperiences = result.selectedExperiences.message;
+        }
+        setErrors(newErrors);
+        setExperienceModalOpen(false);
+    };
+
+    const validateInputs = () => {
+        const validationRules = {
+            nickname: [
+                required("닉네임을 입력해주세요"),
+                minLength(2, "닉네임은 2자 이상 입력해주세요"),
+                maxLength(20, "닉네임은 20자까지 입력 가능합니다"),
+            ],
+            selectedPersonalities: [minItems(1, "최소 1개 이상의 성격을 선택해주세요")],
+            selectedExperiences: [minItems(1, "최소 1개 이상의 경험을 선택해주세요")],
+        };
+
+        const values = {
+            nickname,
+            selectedPersonalities,
+            selectedExperiences,
+            positions: positions.filter((p) => p.value.trim()),
+            skills: skills.filter((s) => s.value.trim()),
+            resumes: resumes.filter((r) => r.url.trim()),
+            portfolios: portfolios.filter((p) => p.url.trim()),
+        };
+
+        const validationResults = validateForm(values, validationRules);
+        const newErrors: ValidationErrors = {};
+
+        for (const [key, result] of Object.entries(validationResults)) {
+            if (!result.isValid) {
+                newErrors[key] = result.message;
+            }
+        }
+
+        // 동적 필드 검증 (빈 값 체크)
+        positions.forEach((position, index) => {
+            if (!position.value.trim()) {
+                newErrors[`position_${index}`] = "포지션을 입력해주세요";
+            }
+        });
+
+        skills.forEach((skill, index) => {
+            if (!skill.value.trim()) {
+                newErrors[`skill_${index}`] = "스킬을 입력해주세요";
+            }
+        });
+
+        resumes.forEach((resume, index) => {
+            if (!resume.url.trim()) {
+                newErrors[`resume_${index}`] = "이력서 URL을 입력해주세요";
+            } else if (!isValidUrl(resume.url)) {
+                newErrors[`resume_${index}`] = "올바른 URL 형식이 아닙니다";
+            }
+        });
+
+        portfolios.forEach((portfolio, index) => {
+            if (!portfolio.url.trim()) {
+                newErrors[`portfolio_${index}`] = "포트폴리오 URL을 입력해주세요";
+            } else if (!isValidUrl(portfolio.url)) {
+                newErrors[`portfolio_${index}`] = "올바른 URL 형식이 아닙니다";
+            }
+        });
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = () => {
+        if (!validateInputs()) {
+            return;
+        }
+
         const request: CharacterCreateRequest = {
             nickname,
             isPublic,
@@ -98,7 +308,7 @@ export default function CreateCharacterPage() {
             experiences: selectedExperiences.map((e) => ({ id: e.id })),
             positions: positions.map((p) => ({ keyword: p.value })),
             skills: skills.map((s) => ({ keyword: s.value })),
-            sources: sources.map((s) => ({ type: s.type, subtype: s.subtype, url: s.url })),
+            sources: [...resumes, ...portfolios].map((s) => ({ type: s.type, subtype: s.subtype, url: s.url })),
         };
 
         pipe(
@@ -110,11 +320,12 @@ export default function CreateCharacterPage() {
 
     const handleImageChange = (file: File) => {
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            // const reader = new FileReader();
+            // reader.onloadend = () => {
+            //     setImage(reader.result as string);
+            // };
+            // reader.readAsDataURL(file);
+            asyncUploadFile(file);
         }
     };
 
@@ -134,6 +345,38 @@ export default function CreateCharacterPage() {
         const file = e.dataTransfer.files[0];
         if (file && file.type.startsWith("image/")) {
             handleImageChange(file);
+        }
+    };
+
+    const asyncUploadFile = (file: File) => {
+        pipe(
+            uploadFile(file),
+            TE.map((response) => setImage(response.data)),
+            TE.mapLeft((error) => console.error(error))
+        )();
+    };
+
+    const handleFileUpload = async (file: File, sourceId: string, type: "resume" | "portfolio") => {
+        if (file) {
+            pipe(
+                uploadFile(file),
+                TE.map((response) => {
+                    if (type === "resume") {
+                        setResumes(
+                            resumes.map((resume) =>
+                                resume.id === sourceId ? { ...resume, url: response.data } : resume
+                            )
+                        );
+                    } else {
+                        setPortfolios(
+                            portfolios.map((portfolio) =>
+                                portfolio.id === sourceId ? { ...portfolio, url: response.data } : portfolio
+                            )
+                        );
+                    }
+                }),
+                TE.mapLeft((error) => console.error(error))
+            )();
         }
     };
 
@@ -163,10 +406,13 @@ export default function CreateCharacterPage() {
                                     id="nickname"
                                     type="text"
                                     value={nickname}
-                                    onChange={(e) => setNickname(e.target.value)}
+                                    onChange={handleNicknameChange}
                                     placeholder="닉네임을 입력하세요"
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
+                                        errors.nickname ? "border-red-500" : "border-gray-300 dark:border-gray-600"
+                                    }`}
                                 />
+                                {errors.nickname && <p className="mt-1 text-sm text-red-500">{errors.nickname}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1">공개 여부</label>
@@ -279,6 +525,9 @@ export default function CreateCharacterPage() {
                                 ))
                             )}
                         </div>
+                        {errors.selectedPersonalities && (
+                            <p className="mt-2 text-sm text-red-500">{errors.selectedPersonalities}</p>
+                        )}
                     </div>
 
                     {/* 경험 선택 */}
@@ -309,6 +558,9 @@ export default function CreateCharacterPage() {
                                 ))
                             )}
                         </div>
+                        {errors.selectedExperiences && (
+                            <p className="mt-2 text-sm text-red-500">{errors.selectedExperiences}</p>
+                        )}
                     </div>
 
                     {/* 포지션 입력 */}
@@ -323,28 +575,44 @@ export default function CreateCharacterPage() {
                             </button>
                         </div>
                         <div className="space-y-3">
-                            {positions.map((position) => (
-                                <div key={position.id} className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={position.value}
-                                        onChange={(e) =>
-                                            handleFieldChange(setPositions, positions, position.id, e.target.value)
-                                        }
-                                        placeholder="포지션을 입력하세요"
-                                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
-                                    />
-                                    {positions.length > 1 && (
-                                        <button
-                                            onClick={() => handleRemoveField(setPositions, positions, position.id)}
-                                            className="text-red-500 hover:text-red-600 transition-colors"
-                                        >
-                                            <FiTrash2 className="h-5 w-5" />
-                                        </button>
+                            {positions.map((position, index) => (
+                                <div key={position.id} className="space-y-1">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={position.value}
+                                            onChange={(e) =>
+                                                handleFieldChange(
+                                                    setPositions,
+                                                    positions,
+                                                    position.id,
+                                                    e.target.value,
+                                                    "position"
+                                                )
+                                            }
+                                            placeholder="포지션을 입력하세요"
+                                            className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
+                                                errors[`position_${index}`]
+                                                    ? "border-red-500"
+                                                    : "border-gray-300 dark:border-gray-600"
+                                            }`}
+                                        />
+                                        {positions.length > 1 && (
+                                            <button
+                                                onClick={() => handleRemoveField(setPositions, positions, position.id)}
+                                                className="text-red-500 hover:text-red-600 transition-colors"
+                                            >
+                                                <FiTrash2 className="h-5 w-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    {errors[`position_${index}`] && (
+                                        <p className="text-sm text-red-500">{errors[`position_${index}`]}</p>
                                     )}
                                 </div>
                             ))}
                         </div>
+                        {errors.positions && <p className="mt-2 text-sm text-red-500">{errors.positions}</p>}
                     </div>
 
                     {/* 스킬 입력 */}
@@ -359,37 +627,49 @@ export default function CreateCharacterPage() {
                             </button>
                         </div>
                         <div className="space-y-3">
-                            {skills.map((skill) => (
-                                <div key={skill.id} className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={skill.value}
-                                        onChange={(e) => handleFieldChange(setSkills, skills, skill.id, e.target.value)}
-                                        placeholder="스킬을 입력하세요"
-                                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
-                                    />
-                                    {skills.length > 1 && (
-                                        <button
-                                            onClick={() => handleRemoveField(setSkills, skills, skill.id)}
-                                            className="text-red-500 hover:text-red-600 transition-colors"
-                                        >
-                                            <FiTrash2 className="h-5 w-5" />
-                                        </button>
+                            {skills.map((skill, index) => (
+                                <div key={skill.id} className="space-y-1">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={skill.value}
+                                            onChange={(e) =>
+                                                handleFieldChange(setSkills, skills, skill.id, e.target.value, "skill")
+                                            }
+                                            placeholder="스킬을 입력하세요"
+                                            className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
+                                                errors[`skill_${index}`]
+                                                    ? "border-red-500"
+                                                    : "border-gray-300 dark:border-gray-600"
+                                            }`}
+                                        />
+                                        {skills.length > 1 && (
+                                            <button
+                                                onClick={() => handleRemoveField(setSkills, skills, skill.id)}
+                                                className="text-red-500 hover:text-red-600 transition-colors"
+                                            >
+                                                <FiTrash2 className="h-5 w-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    {errors[`skill_${index}`] && (
+                                        <p className="text-sm text-red-500">{errors[`skill_${index}`]}</p>
                                     )}
                                 </div>
                             ))}
                         </div>
+                        {errors.skills && <p className="mt-2 text-sm text-red-500">{errors.skills}</p>}
                     </div>
 
                     {/* 소스 입력 */}
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">소스</h2>
+                            <h2 className="text-xl font-semibold">이력서</h2>
                             <button
                                 onClick={() =>
-                                    setSources([
-                                        ...sources,
-                                        { id: Date.now().toString(), type: "link", subtype: "", url: "" },
+                                    setResumes([
+                                        ...resumes,
+                                        { id: Date.now().toString(), type: "link", subtype: "resume", url: "" },
                                     ])
                                 }
                                 className="text-blue-600 hover:text-blue-700 transition-colors"
@@ -398,42 +678,177 @@ export default function CreateCharacterPage() {
                             </button>
                         </div>
                         <div className="space-y-4">
-                            {sources.map((source) => (
-                                <div key={source.id} className="space-y-3">
+                            {resumes.map((resume, index) => (
+                                <div key={resume.id} className="space-y-3">
                                     <div className="flex gap-2">
                                         <select
-                                            value={source.type}
+                                            value={resume.type}
                                             onChange={(e) =>
-                                                handleSourceChange(source.id, "type", e.target.value as "file" | "link")
+                                                handleSourceChange(
+                                                    resume.id,
+                                                    "type",
+                                                    e.target.value as "file" | "link",
+                                                    "resume"
+                                                )
                                             }
                                             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
                                         >
                                             <option value="file">파일</option>
                                             <option value="link">링크</option>
                                         </select>
-                                        <input
-                                            type="text"
-                                            value={source.subtype}
-                                            onChange={(e) => handleSourceChange(source.id, "subtype", e.target.value)}
-                                            placeholder="서브타입을 입력하세요"
-                                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
-                                        />
-                                        {sources.length > 1 && (
+                                        {resumes.length > 1 && (
                                             <button
-                                                onClick={() => setSources(sources.filter((s) => s.id !== source.id))}
+                                                onClick={() => setResumes(resumes.filter((s) => s.id !== resume.id))}
                                                 className="text-red-500 hover:text-red-600 transition-colors"
                                             >
                                                 <FiTrash2 className="h-5 w-5" />
                                             </button>
                                         )}
                                     </div>
-                                    <input
-                                        type="text"
-                                        value={source.url}
-                                        onChange={(e) => handleSourceChange(source.id, "url", e.target.value)}
-                                        placeholder="URL을 입력하세요"
-                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
-                                    />
+                                    {resume.type === "file" ? (
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) handleFileUpload(file, resume.id, "resume");
+                                                }}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                accept=".pdf,.doc,.docx"
+                                            />
+                                            <div
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 
+                                                ${
+                                                    resume.url
+                                                        ? "border-green-500 dark:border-green-400"
+                                                        : "border-gray-300 dark:border-gray-600"
+                                                }
+                                                flex items-center justify-between`}
+                                            >
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    {resume.url ? "파일이 업로드됨" : "파일을 선택하세요"}
+                                                </span>
+                                                <FiPlus className="h-5 w-5" />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <input
+                                                type="text"
+                                                value={resume.url}
+                                                onChange={(e) =>
+                                                    handleSourceChange(resume.id, "url", e.target.value, "resume")
+                                                }
+                                                placeholder="URL을 입력하세요"
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
+                                                    errors[`resume_${index}`]
+                                                        ? "border-red-500"
+                                                        : "border-gray-300 dark:border-gray-600"
+                                                }`}
+                                            />
+                                        </>
+                                    )}
+                                    {checkNotionUrl(resume.url) && (
+                                        <p className="text-sm text-red-500">노션 URL입니다.</p>
+                                    )}
+                                    {errors[`resume_${index}`] && (
+                                        <p className="text-sm text-red-500">{errors[`resume_${index}`]}</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold">포트폴리오</h2>
+                            <button
+                                onClick={() =>
+                                    setPortfolios([
+                                        ...portfolios,
+                                        { id: Date.now().toString(), type: "link", subtype: "portfolio", url: "" },
+                                    ])
+                                }
+                                className="text-blue-600 hover:text-blue-700 transition-colors"
+                            >
+                                <FiPlus className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            {portfolios.map((portfolio, index) => (
+                                <div key={portfolio.id} className="space-y-3">
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={portfolio.type}
+                                            onChange={(e) =>
+                                                handleSourceChange(
+                                                    portfolio.id,
+                                                    "type",
+                                                    e.target.value as "file" | "link",
+                                                    "portfolio"
+                                                )
+                                            }
+                                            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                                        >
+                                            <option value="file">파일</option>
+                                            <option value="link">링크</option>
+                                        </select>
+                                        {portfolios.length > 1 && (
+                                            <button
+                                                onClick={() =>
+                                                    setPortfolios(portfolios.filter((s) => s.id !== portfolio.id))
+                                                }
+                                                className="text-red-500 hover:text-red-600 transition-colors"
+                                            >
+                                                <FiTrash2 className="h-5 w-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    {portfolio.type === "file" ? (
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) handleFileUpload(file, portfolio.id, "portfolio");
+                                                }}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                accept=".pdf,.doc,.docx"
+                                            />
+                                            <div
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 
+                                                ${
+                                                    portfolio.url
+                                                        ? "border-green-500 dark:border-green-400"
+                                                        : "border-gray-300 dark:border-gray-600"
+                                                }
+                                                flex items-center justify-between`}
+                                            >
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    {portfolio.url ? "파일이 업로드됨" : "파일을 선택하세요"}
+                                                </span>
+                                                <FiPlus className="h-5 w-5" />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            value={portfolio.url}
+                                            onChange={(e) =>
+                                                handleSourceChange(portfolio.id, "url", e.target.value, "portfolio")
+                                            }
+                                            placeholder="URL을 입력하세요"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
+                                                errors[`portfolio_${index}`]
+                                                    ? "border-red-500"
+                                                    : "border-gray-300 dark:border-gray-600"
+                                            }`}
+                                        />
+                                    )}
+
+                                    {errors[`portfolio_${index}`] && (
+                                        <p className="text-sm text-red-500">{errors[`portfolio_${index}`]}</p>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -461,10 +876,10 @@ export default function CreateCharacterPage() {
                 isOpen={personalityModalOpen}
                 onClose={() => setPersonalityModalOpen(false)}
                 title="성격 선택"
-                onConfirm={() => setSelectedPersonalities(tempSelectedPersonalities)}
+                onConfirm={handlePersonalitiesConfirm}
             >
-                <Listbox value={tempSelectedPersonalities} onChange={setTempSelectedPersonalities} multiple>
-                    <div className="space-y-2">
+                <Listbox value={tempSelectedPersonalities} onChange={handlePersonalitiesChange} multiple>
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
                         {personalities.map((personality) => (
                             <Listbox.Option
                                 key={personality.id}
@@ -504,10 +919,10 @@ export default function CreateCharacterPage() {
                 isOpen={experienceModalOpen}
                 onClose={() => setExperienceModalOpen(false)}
                 title="경험 선택"
-                onConfirm={() => setSelectedExperiences(tempSelectedExperiences)}
+                onConfirm={handleExperiencesConfirm}
             >
-                <Listbox value={tempSelectedExperiences} onChange={setTempSelectedExperiences} multiple>
-                    <div className="space-y-2">
+                <Listbox value={tempSelectedExperiences} onChange={handleExperiencesChange} multiple>
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
                         {experiences.map((experience) => (
                             <Listbox.Option
                                 key={experience.id}

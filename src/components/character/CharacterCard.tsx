@@ -8,8 +8,8 @@ interface CharacterCardProps {
 
 export default function CharacterCard({ character, onClick }: CharacterCardProps) {
     return (
-        <div onClick={() => onClick(character)} className="cursor-pointer group relative">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden aspect-square">
+        <div onClick={() => onClick(character)} className="cursor-pointer group relative h-full">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden h-full">
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-4">
                     <div className="flex flex-wrap gap-1">
                         {character.personalities?.map((personality, index) => (
