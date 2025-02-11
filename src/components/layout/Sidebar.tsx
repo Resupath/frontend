@@ -106,8 +106,9 @@ export const Sidebar: FC<{}> = ({}) => {
                                         <FaUserCircle className="text-4xl" />
                                     </button>
                                     <button
-                                        onClick={() => {
+                                        onClick={async () => {
                                             clearAuth();
+                                            await asyncListRooms();
                                             router.push("/");
                                         }}
                                         className="text-sm"
