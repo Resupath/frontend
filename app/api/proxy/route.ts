@@ -11,7 +11,16 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Path parameter is required" }, { status: 400 });
         }
 
-        const response = await fetch(`${BACKEND_URL}${path}`, {
+        const forwardParams = new URLSearchParams();
+        searchParams.forEach((value, key) => {
+            if (key !== "path") {
+                forwardParams.append(key, value);
+            }
+        });
+
+        const targetUrl = `${BACKEND_URL}${path}${forwardParams.toString() ? `?${forwardParams.toString()}` : ""}`;
+
+        const response = await fetch(targetUrl, {
             headers: {
                 ...Object.fromEntries(request.headers),
                 host: new URL(BACKEND_URL as string).host,
