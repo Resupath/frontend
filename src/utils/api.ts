@@ -3,7 +3,8 @@ import axios from "axios";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 
 export const api = axios.create({
-    baseURL: "http://localhost:3000",
+    baseURL: "http://resupath.click",
+    // baseURL: "http://localhost:3000",
 });
 
 api.interceptors.request.use((config) => {
