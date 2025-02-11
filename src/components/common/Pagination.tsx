@@ -34,8 +34,6 @@ export function Pagination({ meta, onPageChange, className = "" }: PaginationPro
         return items;
     }, [meta.page, meta.totalPage]);
 
-    console.log(pages, "pages");
-
     // if (meta.totalPage <= 1) return null;
 
     return (
