@@ -30,6 +30,9 @@ export default async function RootLayout({
 
     return (
         <html lang="ko" className={theme}>
+            <head>
+                <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+            </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <ThemeStoreProvider initialTheme={theme}>
                     <Home>{children}</Home>
