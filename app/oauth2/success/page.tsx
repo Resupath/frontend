@@ -8,9 +8,11 @@ import { pipe } from "fp-ts/lib/function";
 
 import * as TE from "fp-ts/TaskEither";
 import * as O from "fp-ts/Option";
+import { useRoomStore } from "@/src/stores/useRoomStore";
 
 export default function Home() {
     const { setAuth } = useAuthStore((state) => state);
+    const { asyncListRooms } = useRoomStore((state) => state);
     const router = useRouter();
     const searchParams = useSearchParams();
     const code = searchParams.get("code");
@@ -39,8 +41,9 @@ export default function Home() {
             (error) => new Error("토큰 요청 실패")
         );
 
-    const saveToken = (data: { id: string; name: string; accessToken: string; refreshToken: string }) => {
+    const saveToken = async (data: { id: string; name: string; accessToken: string; refreshToken: string }) => {
         setAuth(data);
+        await asyncListRooms();
         router.push("/");
     };
 
