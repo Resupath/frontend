@@ -11,7 +11,7 @@ function classNames(...classes: string[]) {
 export default function MyPage() {
     const tabs = [
         { name: "프로필", component: <ProfileTab /> },
-        { name: "성격", component: <PersonalitiesTab /> },
+        // { name: "성격", component: <PersonalitiesTab /> },
         { name: "경력", component: <ExperiencesTab /> },
     ];
 
@@ -22,7 +22,7 @@ export default function MyPage() {
                     <h1 className="text-3xl font-bold mb-8">마이페이지</h1>
 
                     <Tab.Group>
-                        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-8">
+                        <Tab.List className="flex space-x-1 rounded-xl bg-surface p-1 mb-8">
                             {tabs.map((tab) => (
                                 <Tab
                                     key={tab.name}

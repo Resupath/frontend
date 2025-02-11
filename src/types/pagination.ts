@@ -10,4 +10,4 @@ interface Pagination<T> {
     meta: PaginationMeta;
 }
 
-export type { Pagination };
+export type { Pagination, PaginationMeta };

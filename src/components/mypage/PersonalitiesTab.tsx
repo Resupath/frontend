@@ -55,7 +55,7 @@ export default function PersonalitiesTab() {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-surface rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-semibold mb-4">성격 추가</h3>
                 <div className="space-y-4">
                     <Listbox value={selectedPersonalities} onChange={setSelectedPersonalities} multiple>
@@ -107,14 +107,14 @@ export default function PersonalitiesTab() {
                     <button
                         onClick={asyncCreatePersonalities}
                         disabled={selectedPersonalities.length === 0}
-                        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+                        className="w-full btn-primary"
                     >
                         추가
                     </button>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-surface rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-semibold mb-4">나의 성격</h3>
                 <div className="space-y-3">
                     {personalities.data.length === 0 ? (
@@ -123,7 +123,7 @@ export default function PersonalitiesTab() {
                         personalities.data.map((personality) => (
                             <div
                                 key={personality.id}
-                                className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                                className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 bg-white dark:bg-surface rounded-lg"
                             >
                                 <div>
                                     <h4 className="font-medium">{personality.keyword}</h4>

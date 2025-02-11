@@ -13,6 +13,9 @@ interface Experience {
 }
 
 type ExperienceCreateRequest = Pick<Experience, "companyName" | "position" | "startDate" | "endDate" | "sequence">;
+type ExperienceUpdateRequest = Pick<Experience, "companyName" | "position" | "startDate" | "endDate" | "sequence"> & {
+    id: string;
+};
 
 const createExperience = (request: ExperienceCreateRequest[]): TE.TaskEither<Error, void> =>
     TE.tryCatch(
@@ -31,5 +34,13 @@ const listExperiences = (): TE.TaskEither<Error, Experience[]> =>
         (error) => new Error("Failed to fetch experiences")
     );
 
-export type { Experience, ExperienceCreateRequest };
-export { createExperience, listExperiences };
+const updateExperience = (request: ExperienceUpdateRequest): TE.TaskEither<Error, void> =>
+    TE.tryCatch(
+        async () => {
+            await api.patch<void>(`/experiences/${request.id}`, request);
+        },
+        (error) => new Error("Failed to update experience")
+    );
+
+export type { Experience, ExperienceCreateRequest, ExperienceUpdateRequest };
+export { createExperience, listExperiences, updateExperience };
