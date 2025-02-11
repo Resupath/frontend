@@ -3,8 +3,7 @@ import axios from "axios";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 
 export const api = axios.create({
-    baseURL: "http://resupath.click",
-    // baseURL: "http://localhost:3000",
+    baseURL: process.env.NEXT_PUBLIC_SERVER_URL,
 });
 
 api.interceptors.request.use((config) => {
