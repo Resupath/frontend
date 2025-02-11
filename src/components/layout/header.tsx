@@ -19,13 +19,14 @@ const Header: FC = () => {
     return (
         <header className="w-full bg-white dark:bg-background text-black dark:text-white border-b border-solid border-gray-200 dark:border-gray-800">
             <div className="flex flex-row-reverse items-center gap-2 px-4 py-4 w-full">
-                <button
+                {/* 임시 주석 */}
+                {/* <button
                     onClick={toggleTheme}
                     className="p-2 transition-colors rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
                     aria-label="테마 변경"
                 >
                     {theme === "light" ? <MoonIcon /> : <SunIcon />}
-                </button>
+                </button> */}
             </div>
         </header>
     );

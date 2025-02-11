@@ -1,15 +1,15 @@
 "use client";
 
-import React, { FC, useState } from "react";
+import React, { FC, useState, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 import { pipe } from "fp-ts/lib/function";
 import { useRouter } from "next/navigation";
-
-import * as E from "fp-ts/Either";
 import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
-
+import { RoomItem } from "../room/RoomItem";
+import { useRoomStore } from "@/src/stores/useRoomStore";
+import * as E from "fp-ts/Either";
 /**
  * @author bkdragon
  * @function Sidebar
@@ -19,10 +19,11 @@ export const Sidebar: FC<{}> = ({}) => {
     const router = useRouter();
     const { setIsOpen } = useLoginModalStore();
     const { checkLogin, clearAuth } = useAuthStore((state) => state);
+    const { rooms, asyncListRooms } = useRoomStore((state) => state);
 
     const isLogin = checkLogin();
 
-    const [width, setWidth] = useState(250);
+    const [width, setWidth] = useState(300);
 
     const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
         const startX = e.clientX;
@@ -53,6 +54,10 @@ export const Sidebar: FC<{}> = ({}) => {
             )
         );
 
+    useEffect(() => {
+        asyncListRooms();
+    }, []);
+
     return (
         <>
             {!width && (
@@ -79,6 +84,14 @@ export const Sidebar: FC<{}> = ({}) => {
                     >
                         <FiChevronsLeft />
                     </button>
+                </div>
+
+                <div className="flex-[2] overflow-y-auto px-4">
+                    <div className="space-y-2">
+                        {rooms.map((room) => (
+                            <RoomItem key={room.id} room={room} onClick={(r) => router.push(`/room/${r.id}`)} />
+                        ))}
+                    </div>
                 </div>
 
                 <div className="w-full flex flex-row flex-1">
@@ -110,10 +123,10 @@ export const Sidebar: FC<{}> = ({}) => {
                             )}
                         </div>
                     </div>
-                    <div
+                    {/* <div
                         onMouseDown={handleResize}
-                        className="w-1 cursor-ew-resize   bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700"
-                    ></div>
+                        className="w-1 cursor-ew-resize h-full bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700"
+                    ></div> */}
                 </div>
             </aside>
         </>
