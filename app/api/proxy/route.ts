@@ -44,15 +44,35 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Path parameter is required" }, { status: 400 });
         }
 
-        const body = await request.json();
-        const response = await fetch(`${BACKEND_URL}${path}`, {
+        const forwardParams = new URLSearchParams();
+        searchParams.forEach((value, key) => {
+            if (key !== "path") {
+                forwardParams.append(key, value);
+            }
+        });
+
+        const contentType = request.headers.get("content-type");
+        let body;
+
+        if (contentType?.includes("application/json")) {
+            body = JSON.stringify(await request.json());
+        } else if (contentType?.includes("multipart/form-data")) {
+            body = await request.formData();
+        } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+            body = await request.formData();
+        } else {
+            body = await request.text();
+        }
+
+        const targetUrl = `${BACKEND_URL}${path}${forwardParams.toString() ? `?${forwardParams.toString()}` : ""}`;
+
+        const response = await fetch(targetUrl, {
             method: "POST",
             headers: {
                 ...Object.fromEntries(request.headers),
-                "Content-Type": "application/json",
                 host: new URL(BACKEND_URL as string).host,
             },
-            body: JSON.stringify(body),
+            body,
         });
 
         const data = await response.json();
@@ -72,15 +92,35 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: "Path parameter is required" }, { status: 400 });
         }
 
-        const body = await request.json();
-        const response = await fetch(`${BACKEND_URL}${path}`, {
+        const forwardParams = new URLSearchParams();
+        searchParams.forEach((value, key) => {
+            if (key !== "path") {
+                forwardParams.append(key, value);
+            }
+        });
+
+        const contentType = request.headers.get("content-type");
+        let body;
+
+        if (contentType?.includes("application/json")) {
+            body = JSON.stringify(await request.json());
+        } else if (contentType?.includes("multipart/form-data")) {
+            body = await request.formData();
+        } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+            body = await request.formData();
+        } else {
+            body = await request.text();
+        }
+
+        const targetUrl = `${BACKEND_URL}${path}${forwardParams.toString() ? `?${forwardParams.toString()}` : ""}`;
+
+        const response = await fetch(targetUrl, {
             method: "PUT",
             headers: {
                 ...Object.fromEntries(request.headers),
-                "Content-Type": "application/json",
                 host: new URL(BACKEND_URL as string).host,
             },
-            body: JSON.stringify(body),
+            body,
         });
 
         const data = await response.json();
