@@ -21,7 +21,7 @@ export const ThemeStoreProvider = ({ children, initialTheme }: ThemeStoreProvide
     const initializeStore = (current: O.Option<ThemeStoreApi>): O.Option<ThemeStoreApi> =>
         pipe(
             current,
-            O.fold(() => O.some(createThemeStore({ theme: initialTheme || "light" })), O.some)
+            O.fold(() => O.some(createThemeStore({ theme: initialTheme || "dark" })), O.some)
         );
 
     storeRef.current = initializeStore(storeRef.current);
