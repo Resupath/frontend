@@ -18,6 +18,7 @@ export default {
                 text: "var(--text)",
                 "card-bg": "var(--card-bg)",
                 "card-fg": "var(--card-fg)",
+                surface: "var(--surface)",
             },
         },
     },
