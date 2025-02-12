@@ -53,6 +53,15 @@ const listCharacters = (page?: number): TE.TaskEither<Error, Pagination<Characte
         (error) => new Error("Failed to fetch characters")
     );
 
+const retrieveCharacter = (id: string): TE.TaskEither<Error, Character> =>
+    TE.tryCatch(
+        async () => {
+            const response = await api.get<Character>(`/characters/${id}`);
+            return response.data;
+        },
+        (error) => new Error("Failed to fetch character")
+    );
+
 const listMyCharacters = (page?: number): TE.TaskEither<Error, Pagination<Character>> =>
     TE.tryCatch(
         async () => {
@@ -64,4 +73,4 @@ const listMyCharacters = (page?: number): TE.TaskEither<Error, Pagination<Charac
 
 export type { Character, CharacterCreateRequest };
 
-export { listCharacters, createCharacter, listMyCharacters };
+export { listCharacters, createCharacter, listMyCharacters, retrieveCharacter };
