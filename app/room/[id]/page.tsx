@@ -98,7 +98,7 @@ export default function ChatRoom({ params }: { params: Promise<{ id: string }> }
                                     <FiUser className="w-5 h-5 text-gray-500" />
                                 )}
                             </div>
-                            <div className="max-w-[70%] rounded-lg p-3 bg-white dark:bg-gray-800 rounded-bl-none">
+                            <div className="max-w-[70%] rounded-lg p-3 bg-white dark:bg-gray-800 rounded-bl-none border border-gray-300 dark:border-none">
                                 <p className="text-sm">{`안녕하세요, ${roomInfo.character.nickname}입니다. 잘 부탁드립니다.`}</p>
                                 <span className="text-xs opacity-70 mt-1 block">{new Date().toLocaleTimeString()}</span>
                             </div>
@@ -150,10 +150,16 @@ export default function ChatRoom({ params }: { params: Promise<{ id: string }> }
                                 className={`max-w-[70%] rounded-lg p-3 ${
                                     chat.userId
                                         ? "bg-blue-500 text-white rounded-br-none"
-                                        : "bg-white dark:bg-gray-800 rounded-bl-none"
+                                        : "bg-white dark:bg-gray-800 rounded-bl-none border border-gray-300 dark:border-none"
                                 }`}
                             >
-                                <p className="text-sm text-gray-900 dark:text-gray-100">{chat.message}</p>
+                                <p
+                                    className={`text-sm ${
+                                        chat.userId ? "text-white" : "text-gray-900 dark:text-gray-100"
+                                    }`}
+                                >
+                                    {chat.message}
+                                </p>
                                 <span
                                     className={`text-xs mt-1 block ${
                                         chat.userId ? "text-white/70" : "text-gray-600 dark:text-gray-300"
@@ -196,7 +202,7 @@ export default function ChatRoom({ params }: { params: Promise<{ id: string }> }
                     <div ref={messagesEndRef} />
                 </div>
 
-                <div className="p-4 shadow-lg">
+                <div className="p-4">
                     <div className="flex gap-2">
                         <input
                             type="text"
