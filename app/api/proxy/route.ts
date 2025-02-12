@@ -53,13 +53,19 @@ export async function POST(request: NextRequest) {
 
         const contentType = request.headers.get("content-type");
         let body;
+        let headers: Record<string, string> = {
+            ...Object.fromEntries(request.headers),
+            host: new URL(BACKEND_URL as string).host,
+        };
 
         if (contentType?.includes("application/json")) {
             body = JSON.stringify(await request.json());
         } else if (contentType?.includes("multipart/form-data")) {
             body = await request.formData();
+            delete headers["content-type"];
         } else if (contentType?.includes("application/x-www-form-urlencoded")) {
             body = await request.formData();
+            delete headers["content-type"];
         } else {
             body = await request.text();
         }
@@ -68,10 +74,7 @@ export async function POST(request: NextRequest) {
 
         const response = await fetch(targetUrl, {
             method: "POST",
-            headers: {
-                ...Object.fromEntries(request.headers),
-                host: new URL(BACKEND_URL as string).host,
-            },
+            headers,
             body,
         });
 
