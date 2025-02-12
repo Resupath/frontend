@@ -1,7 +1,7 @@
 "use client";
 
 import React, { FC, useEffect, useState } from "react";
-import { Character, listCharacters } from "@/src/types/character";
+import { Character, listCharacters, retrieveCharacter } from "@/src/types/character";
 import { pipe } from "fp-ts/lib/function";
 import { FiChevronsRight, FiSearch, FiUser } from "react-icons/fi";
 import type { Pagination } from "@/src/types/pagination";
@@ -27,6 +27,7 @@ export const CharacterList: FC<{}> = () => {
         },
     });
     const [selectedCharacter, setSelectedCharacter] = useState<O.Option<Character>>(O.none);
+
     const [sidebarWidth, setSidebarWidth] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -61,8 +62,18 @@ export const CharacterList: FC<{}> = () => {
         )();
 
     function handleCharacterClick(character: Character) {
-        setSelectedCharacter(O.some(character));
-        setSidebarWidth(384);
+        pipe(
+            retrieveCharacter(character.id),
+            TE.map((character) => {
+                setSelectedCharacter(O.some(character));
+                setSidebarWidth(384);
+            }),
+            TE.mapLeft((error) => {
+                console.error("Failed to fetch character details:", error);
+                setSelectedCharacter(O.some(character));
+                setSidebarWidth(384);
+            })
+        )();
     }
 
     const asyncCreateRoom = async (characterId: Character["id"]) =>
@@ -119,7 +130,7 @@ export const CharacterList: FC<{}> = () => {
                             flex: 1,
                             gridAutoRows: "250px",
                         }}
-                        className="grid grid-cols-2 md:grid-cols-4 gap-6 overflow-y-auto"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 overflow-y-auto"
                     >
                         {filteredCharacters.map((character: Character) => (
                             <CharacterCard key={character.id} character={character} onClick={handleCharacterClick} />
@@ -143,7 +154,7 @@ export const CharacterList: FC<{}> = () => {
                 <div className="relative h-full">
                     <div
                         className="absolute left-0 top-0 w-1 h-full cursor-ew-resize hover:bg-gray-300 dark:hover:bg-gray-700"
-                        onMouseDown={handleResize}
+                        onMouseDown={sidebarWidth > 0 ? handleResize : undefined}
                     />
 
                     {pipe(
@@ -228,16 +239,31 @@ export const CharacterList: FC<{}> = () => {
 
                                             <div>
                                                 <h3 className="text-lg font-semibold mb-2">경력사항</h3>
-                                                <div className="space-y-2">
+                                                <div className="space-y-3">
                                                     {character.experiences?.map((experience, index) => (
                                                         <div
                                                             key={index}
-                                                            className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                                                            className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
                                                         >
-                                                            <div className="font-medium">{experience.companyName}</div>
-                                                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                                {experience.position}
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div className="font-medium text-base">
+                                                                    {experience.companyName}
+                                                                </div>
+                                                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                                    {experience.startDate} -{" "}
+                                                                    {experience.endDate || "현재"}
+                                                                </div>
                                                             </div>
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <span className="py-1  text-blue-800 dark:text-blue-200 text-sm rounded">
+                                                                    {experience.position}
+                                                                </span>
+                                                            </div>
+                                                            {experience.description && (
+                                                                <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                                                                    {experience.description}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
