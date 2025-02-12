@@ -63,9 +63,11 @@ export async function POST(request: NextRequest) {
         } else if (contentType?.includes("multipart/form-data")) {
             body = await request.formData();
             delete headers["content-type"];
+            delete headers["content-length"];
         } else if (contentType?.includes("application/x-www-form-urlencoded")) {
             body = await request.formData();
             delete headers["content-type"];
+            delete headers["content-length"];
         } else {
             body = await request.text();
         }
