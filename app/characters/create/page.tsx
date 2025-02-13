@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { FiArrowLeft, FiPlus, FiTrash2, FiCheck } from "react-icons/fi";
+import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiFile, FiFileText, FiImage, FiLink, FiUpload } from "react-icons/fi";
 import { pipe } from "fp-ts/function";
 import * as TE from "fp-ts/TaskEither";
 import { Personality } from "@/src/types/personality";
@@ -15,6 +15,8 @@ import SelectionModal from "@/src/components/modal/SelectionModal";
 import { uploadFile } from "@/src/types/file";
 import { validateForm, required, minLength, maxLength, url, minItems } from "@/src/utils/validation";
 import { checkNotionUrl } from "@/src/utils/notion";
+import { useAlertStore } from "@/src/stores/useAlertStore";
+
 interface InputField {
     id: string;
     value: string;
@@ -42,6 +44,7 @@ const isValidUrl = (urlString: string): boolean => {
 
 export default function CreateCharacterPage() {
     const router = useRouter();
+    const { addAlert } = useAlertStore();
     const [personalities, setPersonalities] = useState<Personality[]>([]);
     const [experiences, setExperiences] = useState<Experience[]>([]);
     const [selectedPersonalities, setSelectedPersonalities] = useState<Personality[]>([]);
@@ -56,6 +59,7 @@ export default function CreateCharacterPage() {
     const [portfolios, setPortfolios] = useState<SourceField[]>([
         { id: Date.now().toString(), type: "link", subtype: "portfolio", url: "" },
     ]);
+    const [fileNames, setFileNames] = useState<{ [key: string]: string }>({});
 
     const [nickname, setNickname] = useState("");
     const [isPublic, setIsPublic] = useState(true);
@@ -69,6 +73,7 @@ export default function CreateCharacterPage() {
     const [tempSelectedExperiences, setTempSelectedExperiences] = useState<Experience[]>([]);
 
     const [errors, setErrors] = useState<ValidationErrors>({});
+    const [dragTargetId, setDragTargetId] = useState<string | null>(null);
 
     useEffect(() => {
         // 성격 목록 조회
@@ -250,7 +255,6 @@ export default function CreateCharacterPage() {
             positions: positions.filter((p) => p.value.trim()),
             skills: skills.filter((s) => s.value.trim()),
             resumes: resumes.filter((r) => r.url.trim()),
-            portfolios: portfolios.filter((p) => p.url.trim()),
         };
 
         const validationResults = validateForm(values, validationRules);
@@ -283,10 +287,9 @@ export default function CreateCharacterPage() {
             }
         });
 
+        // 포트폴리오는 필수가 아니므로 URL 형식만 검증
         portfolios.forEach((portfolio, index) => {
-            if (!portfolio.url.trim()) {
-                newErrors[`portfolio_${index}`] = "포트폴리오 URL을 입력해주세요";
-            } else if (!isValidUrl(portfolio.url)) {
+            if (portfolio.url.trim() && !isValidUrl(portfolio.url)) {
                 newErrors[`portfolio_${index}`] = "올바른 URL 형식이 아닙니다";
             }
         });
@@ -358,6 +361,9 @@ export default function CreateCharacterPage() {
 
     const handleFileUpload = async (file: File, sourceId: string, type: "resume" | "portfolio") => {
         if (file) {
+            // 파일명 저장
+            setFileNames((prev) => ({ ...prev, [sourceId]: file.name }));
+
             pipe(
                 uploadFile(file),
                 TE.map((response) => {
@@ -377,6 +383,61 @@ export default function CreateCharacterPage() {
                 }),
                 TE.mapLeft((error) => console.error(error))
             )();
+        }
+    };
+
+    // 파일 아이콘을 결정하는 함수 추가
+    const getFileIcon = (fileName: string) => {
+        if (!fileName) return <FiFile className="h-5 w-5" />;
+
+        const extension = fileName.split(".").pop()?.toLowerCase();
+
+        switch (extension) {
+            case "pdf":
+                return <FiFileText className="h-5 w-5 text-red-500" />;
+            case "doc":
+            case "docx":
+                return <FiFileText className="h-5 w-5 text-blue-500" />;
+            case "jpg":
+            case "jpeg":
+            case "png":
+            case "gif":
+                return <FiImage className="h-5 w-5 text-green-500" />;
+            default:
+                return <FiFile className="h-5 w-5" />;
+        }
+    };
+
+    const isValidFileType = (file: File, type: "resume" | "portfolio") => {
+        const allowedTypes = [".pdf", ".doc", ".docx", ".md"];
+        const extension = "." + file.name.split(".").pop()?.toLowerCase();
+        return allowedTypes.includes(extension);
+    };
+
+    const handleFileDrop = (e: React.DragEvent, sourceId: string, type: "resume" | "portfolio") => {
+        e.preventDefault();
+        setDragTargetId(null);
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            if (isValidFileType(file, type)) {
+                handleFileUpload(file, sourceId, type);
+            } else {
+                addAlert(
+                    "지원하지 않는 파일 형식입니다. PDF, DOC, DOCX, MD 파일만 업로드 가능합니다.",
+                    "error"
+                );
+            }
+        }
+    };
+
+    const handleFileSelect = (file: File, sourceId: string, type: "resume" | "portfolio") => {
+        if (isValidFileType(file, type)) {
+            handleFileUpload(file, sourceId, type);
+        } else {
+            addAlert(
+                "지원하지 않는 파일 형식입니다. PDF, DOC, DOCX, MD 파일만 업로드 가능합니다.",
+                "error"
+            );
         }
     };
 
@@ -400,7 +461,7 @@ export default function CreateCharacterPage() {
                         <div className="space-y-4">
                             <div>
                                 <label htmlFor="nickname" className="block text-sm font-medium mb-1">
-                                    닉네임
+                                    닉네임 <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     id="nickname"
@@ -500,7 +561,9 @@ export default function CreateCharacterPage() {
                     {/* 성격 선택 */}
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">성격</h2>
+                            <h2 className="text-xl font-semibold">
+                                성격 <span className="text-red-500">*</span>
+                            </h2>
                             <button
                                 onClick={() => {
                                     setTempSelectedPersonalities(selectedPersonalities);
@@ -533,7 +596,9 @@ export default function CreateCharacterPage() {
                     {/* 경험 선택 */}
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">경험</h2>
+                            <h2 className="text-xl font-semibold">
+                                경험 <span className="text-red-500">*</span>
+                            </h2>
                             <button
                                 onClick={() => {
                                     setTempSelectedExperiences(selectedExperiences);
@@ -566,7 +631,9 @@ export default function CreateCharacterPage() {
                     {/* 포지션 입력 */}
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">포지션</h2>
+                            <h2 className="text-xl font-semibold">
+                                포지션 <span className="text-red-500">*</span>
+                            </h2>
                             <button
                                 onClick={() => handleAddField(setPositions, positions)}
                                 className="text-blue-600 hover:text-blue-700 transition-colors"
@@ -618,7 +685,9 @@ export default function CreateCharacterPage() {
                     {/* 스킬 입력 */}
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">스킬</h2>
+                            <h2 className="text-xl font-semibold">
+                                스킬 <span className="text-red-500">*</span>
+                            </h2>
                             <button
                                 onClick={() => handleAddField(setSkills, skills)}
                                 className="text-blue-600 hover:text-blue-700 transition-colors"
@@ -664,7 +733,9 @@ export default function CreateCharacterPage() {
                     {/* 소스 입력 */}
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">이력서</h2>
+                            <h2 className="text-xl font-semibold">
+                                이력서 <span className="text-red-500">*</span>
+                            </h2>
                             <button
                                 onClick={() =>
                                     setResumes([
@@ -711,24 +782,48 @@ export default function CreateCharacterPage() {
                                                 type="file"
                                                 onChange={(e) => {
                                                     const file = e.target.files?.[0];
-                                                    if (file) handleFileUpload(file, resume.id, "resume");
+                                                    if (file) handleFileSelect(file, resume.id, "resume");
                                                 }}
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                accept=".pdf,.doc,.docx"
+                                                accept=".pdf,.doc,.docx,.md"
                                             />
                                             <div
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 
-                                                ${
-                                                    resume.url
-                                                        ? "border-green-500 dark:border-green-400"
-                                                        : "border-gray-300 dark:border-gray-600"
-                                                }
-                                                flex items-center justify-between`}
+                                                className={`w-full h-32 border-2 border-dashed rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 
+                                                ${dragTargetId === resume.id ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}
+                                                ${resume.url ? "border-green-500 dark:border-green-400" : "border-gray-300 dark:border-gray-600"}
+                                                flex flex-col items-center justify-center gap-2 transition-colors duration-200 group hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20`}
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    setDragTargetId(resume.id);
+                                                }}
+                                                onDragLeave={(e) => {
+                                                    e.preventDefault();
+                                                    setDragTargetId(null);
+                                                }}
+                                                onDrop={(e) => handleFileDrop(e, resume.id, "resume")}
                                             >
-                                                <span className="text-gray-500 dark:text-gray-400">
-                                                    {resume.url ? "파일이 업로드됨" : "파일을 선택하세요"}
-                                                </span>
-                                                <FiPlus className="h-5 w-5" />
+                                                {resume.url ? (
+                                                    <div className="flex items-center gap-3">
+                                                        {getFileIcon(fileNames[resume.id])}
+                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">
+                                                            {fileNames[resume.id] || "파일이 업로드됨"}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                                                            <FiUpload className="h-6 w-6 text-blue-500 dark:text-blue-400" />
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                <span className="text-blue-500 dark:text-blue-400 font-medium">파일을 선택</span>하거나 드래그하여 업로드
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                                PDF, DOC, DOCX, MD (최대 10MB)
+                                                            </p>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     ) : (
@@ -810,24 +905,48 @@ export default function CreateCharacterPage() {
                                                 type="file"
                                                 onChange={(e) => {
                                                     const file = e.target.files?.[0];
-                                                    if (file) handleFileUpload(file, portfolio.id, "portfolio");
+                                                    if (file) handleFileSelect(file, portfolio.id, "portfolio");
                                                 }}
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                accept=".pdf,.doc,.docx"
+                                                accept=".pdf,.doc,.docx,.md"
                                             />
                                             <div
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 
-                                                ${
-                                                    portfolio.url
-                                                        ? "border-green-500 dark:border-green-400"
-                                                        : "border-gray-300 dark:border-gray-600"
-                                                }
-                                                flex items-center justify-between`}
+                                                className={`w-full h-32 border-2 border-dashed rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 
+                                                ${dragTargetId === portfolio.id ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}
+                                                ${portfolio.url ? "border-green-500 dark:border-green-400" : "border-gray-300 dark:border-gray-600"}
+                                                flex flex-col items-center justify-center gap-2 transition-colors duration-200 group hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20`}
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    setDragTargetId(portfolio.id);
+                                                }}
+                                                onDragLeave={(e) => {
+                                                    e.preventDefault();
+                                                    setDragTargetId(null);
+                                                }}
+                                                onDrop={(e) => handleFileDrop(e, portfolio.id, "portfolio")}
                                             >
-                                                <span className="text-gray-500 dark:text-gray-400">
-                                                    {portfolio.url ? "파일이 업로드됨" : "파일을 선택하세요"}
-                                                </span>
-                                                <FiPlus className="h-5 w-5" />
+                                                {portfolio.url ? (
+                                                    <div className="flex items-center gap-3">
+                                                        {getFileIcon(fileNames[portfolio.id])}
+                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">
+                                                            {fileNames[portfolio.id] || "파일이 업로드됨"}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                                                            <FiUpload className="h-6 w-6 text-blue-500 dark:text-blue-400" />
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                <span className="text-blue-500 dark:text-blue-400 font-medium">파일을 선택</span>하거나 드래그하여 업로드
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                                PDF, DOC, DOCX, MD (최대 10MB)
+                                                            </p>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     ) : (
