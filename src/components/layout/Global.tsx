@@ -37,7 +37,7 @@ export const Global: FC<{}> = () => {
     const tryGoogleLogin = () =>
         pipe(
             TE.tryCatch(
-                () => api.get<string>("/auth/google"),
+                () => api.get<string>(`/auth/google?redirectUri=${window.location.origin}/oauth2/success`),
                 (error) => new Error("로그인 요청 실패")
             ),
             TE.map(redirectToGoogleLogin),

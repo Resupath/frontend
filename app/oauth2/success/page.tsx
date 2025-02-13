@@ -37,7 +37,9 @@ export default function Home() {
                     name: string;
                     accessToken: string;
                     refreshToken: string;
-                }>("/auth/google/callback", { params: { code } }),
+                }>("/auth/google/callback", {
+                    params: { code, redirectUri: window.location.origin + "/oauth2/success" },
+                }),
             (error) => new Error("토큰 요청 실패")
         );
 
