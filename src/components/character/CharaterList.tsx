@@ -14,18 +14,11 @@ import { useRoomStore } from "@/src/stores/useRoomStore";
 import * as TE from "fp-ts/TaskEither";
 import * as O from "fp-ts/Option";
 
-export const CharacterList: FC<{}> = () => {
+export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = ({ initialCharacters }) => {
     const router = useRouter();
     const { asyncListRooms: refreshRooms } = useRoomStore((state) => state);
-    const [characters, setCharacters] = useState<Pagination<Character>>({
-        data: [],
-        meta: {
-            page: 0,
-            take: 0,
-            totalCount: 0,
-            totalPage: 0,
-        },
-    });
+    const [characters, setCharacters] = useState<Pagination<Character>>(initialCharacters);
+
     const [selectedCharacter, setSelectedCharacter] = useState<O.Option<Character>>(O.none);
 
     const [sidebarWidth, setSidebarWidth] = useState(0);

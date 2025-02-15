@@ -3,7 +3,10 @@ import axios from "axios";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 
 export const api = axios.create({
-    baseURL: "/api/proxy",
+    baseURL:
+        process.env.NODE_ENV === "development"
+            ? process.env.NEXT_PUBLIC_API_URL_DEV + "/api/proxy"
+            : process.env.NEXT_PUBLIC_API_URL_PROD + "/api/proxy",
     paramsSerializer: (params) => {
         const searchParams = new URLSearchParams();
         // path 파라미터는 프록시 라우트에 필요한 실제 엔드포인트 경로
