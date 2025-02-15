@@ -1,6 +1,4 @@
-import { Tab } from "@headlessui/react";
 import ExperiencesTab from "@/src/components/mypage/ExperiencesTab";
-
 import { api } from "@/src/utils/api";
 import { cookies } from "next/headers";
 
