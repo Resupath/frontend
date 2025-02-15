@@ -85,14 +85,15 @@ export default function CharactersPage() {
                         </div>
                     ))}
 
-                    <div className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-                        <button
-                            onClick={handleCreateClick}
-                            className="flex flex-col items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                        >
-                            <FiPlus className="h-8 w-8" />
+                    <div
+                        role="button"
+                        onClick={handleCreateClick}
+                        className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-600 dark:hover:border-blue-400 transition-colors group"
+                    >
+                        <div className="flex flex-col items-center gap-2 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                            <FiPlus className="h-8 w-8 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
                             <span>새 캐릭터 생성</span>
-                        </button>
+                        </div>
                     </div>
                 </div>
             </div>
