@@ -2,84 +2,157 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiFile, FiFileText, FiImage, FiLink, FiUpload } from "react-icons/fi";
+import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiImage } from "react-icons/fi";
 import { pipe } from "fp-ts/function";
 import * as TE from "fp-ts/TaskEither";
-import { Personality } from "@/src/types/personality";
+import { listPersonalitiesAll, Personality } from "@/src/types/personality";
 import { Experience } from "@/src/types/experience";
-import { listPersonalities } from "@/src/types/personality";
 import { listExperiences } from "@/src/types/experience";
-import { CharacterCreateRequest, createCharacter } from "@/src/types/character";
 import { Listbox } from "@headlessui/react";
 import SelectionModal from "@/src/components/modal/SelectionModal";
 import { uploadFile } from "@/src/types/file";
-import { validateForm, required, minLength, maxLength, url, minItems } from "@/src/utils/validation";
 import { checkNotionUrl } from "@/src/utils/notion";
 import { useAlertStore } from "@/src/stores/useAlertStore";
+import { z } from "zod";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ResumeForm } from "@/src/components/form/ResumeForm";
+import { PortfolioForm } from "@/src/components/form/PortfolioForm";
+import { CharacterCreateRequest, createCharacter } from "@/src/types/character";
 
 interface InputField {
     id: string;
-    value: string;
+    keyword: string;
 }
 
-interface SourceField {
-    id: string;
-    type: "file" | "link";
-    subtype: string;
-    url: string;
-}
+const InputFieldSchema = z.object({
+    id: z.string(),
+    keyword: z.string().min(1, "값을 입력해주세요."),
+});
 
-interface ValidationErrors {
-    [key: string]: string;
-}
+const CharacterDefaultSchema = z.object({
+    nickname: z.string().min(2, "닉네임은 2자 이상 입력해주세요"),
+    isPublic: z.boolean(),
+    image: z.string().url("올바른 URL 형식이 아닙니다").nullable(),
 
-const isValidUrl = (urlString: string): boolean => {
-    try {
-        new URL(urlString);
-        return true;
-    } catch {
-        return false;
-    }
-};
+    personalities: z.array(InputFieldSchema).min(1, "한개 이상의 성격을 선택해주세요."),
+    experiences: z
+        .array(
+            z.object({
+                id: z.string(),
+                companyName: z.string(),
+                position: z.string(),
+                startDate: z.string(),
+                endDate: z.string(),
+                description: z.string().nullable(),
+                sequence: z.number(),
+            })
+        )
+        .min(1, "한개 이상의 경험을 선택해주세요."),
+    positions: z.array(InputFieldSchema).min(1, "한개 이상의 포지션을 입력해주세요."),
+    skills: z.array(InputFieldSchema).min(1, "한개 이상의 스킬을 입력해주세요."),
+});
+
+const SourceFieldSchema = z.object({
+    id: z.string(),
+    type: z.enum(["file", "link"]),
+    subtype: z.enum(["resume", "portfolio"]),
+    url: z.string().url("올바른 URL 형식이 아닙니다"),
+});
+export type SourceField = z.infer<typeof SourceFieldSchema>;
+
+const SourceArrayFormSchema = z.object({
+    portfolios: z.array(SourceFieldSchema),
+});
+
+const SourceArrayRequiredFormSchema = z.object({
+    resumes: z.array(SourceFieldSchema).min(1, "최소 1개 이상 추가해주세요."),
+});
+
+export type SourceArrayForm = z.infer<typeof SourceArrayFormSchema>;
+export type SourceArrayRequiredForm = z.infer<typeof SourceArrayRequiredFormSchema>;
 
 export default function CreateCharacterPage() {
     const router = useRouter();
     const { addAlert } = useAlertStore();
     const [personalities, setPersonalities] = useState<Personality[]>([]);
     const [experiences, setExperiences] = useState<Experience[]>([]);
-    const [selectedPersonalities, setSelectedPersonalities] = useState<Personality[]>([]);
-    const [selectedExperiences, setSelectedExperiences] = useState<Experience[]>([]);
-    const [positions, setPositions] = useState<InputField[]>([{ id: "", value: "" }]);
-    const [skills, setSkills] = useState<InputField[]>([{ id: "", value: "" }]);
 
-    // source
-    const [resumes, setResumes] = useState<SourceField[]>([
-        { id: Date.now().toString(), type: "link", subtype: "resume", url: "" },
-    ]);
-    const [portfolios, setPortfolios] = useState<SourceField[]>([
-        { id: Date.now().toString(), type: "link", subtype: "portfolio", url: "" },
-    ]);
-    const [fileNames, setFileNames] = useState<{ [key: string]: string }>({});
+    console.log(experiences, "experiences");
 
-    const [nickname, setNickname] = useState("");
-    const [isPublic, setIsPublic] = useState(true);
+    const {
+        register: defaultRegister,
+        control: defaultControl,
+        formState: { errors: defaultErrors },
+        setValue: defaultSetValue,
+        watch: defaultWatch,
+        trigger: defaultTrigger,
+    } = useForm<z.infer<typeof CharacterDefaultSchema>>({
+        resolver: zodResolver(CharacterDefaultSchema),
+        mode: "onChange",
+        defaultValues: {
+            nickname: "",
+            isPublic: true,
+            image: null,
+            personalities: [],
+            experiences: [],
+            positions: [{ id: Date.now().toString(), keyword: "" }],
+            skills: [{ id: Date.now().toString(), keyword: "" }],
+        },
+    });
+
+    console.log(defaultErrors, "defaultErrors");
+
+    const { append: appendPositions, remove: removePositions } = useFieldArray({
+        control: defaultControl,
+        name: "positions",
+    });
+
+    const { append: appendSkills, remove: removeSkills } = useFieldArray({
+        control: defaultControl,
+        name: "skills",
+    });
+
     const [image, setImage] = useState<string | null>(null);
+
+    const {
+        register: resumeRegister,
+        control: resumeControl,
+        formState: { errors: resumeErrors },
+        trigger: resumeTrigger,
+        getValues: resumeGetValues,
+    } = useForm<SourceArrayRequiredForm>({
+        resolver: zodResolver(SourceArrayRequiredFormSchema),
+        mode: "onChange",
+        defaultValues: { resumes: [{ id: Date.now().toString(), type: "file", subtype: "resume", url: "" }] },
+    });
+
+    const {
+        register: portfolioRegister,
+        control: portfolioControl,
+        formState: { errors: portfolioErrors },
+        trigger: portfolioTrigger,
+        getValues: portfolioGetValues,
+    } = useForm<SourceArrayForm>({
+        resolver: zodResolver(SourceArrayFormSchema),
+        mode: "onChange",
+        defaultValues: { portfolios: [] },
+    });
+
     const [isDragging, setIsDragging] = useState(false);
 
     // 모달 상태
     const [personalityModalOpen, setPersonalityModalOpen] = useState(false);
     const [experienceModalOpen, setExperienceModalOpen] = useState(false);
+
     const [tempSelectedPersonalities, setTempSelectedPersonalities] = useState<Personality[]>([]);
     const [tempSelectedExperiences, setTempSelectedExperiences] = useState<Experience[]>([]);
-
-    const [errors, setErrors] = useState<ValidationErrors>({});
-    const [dragTargetId, setDragTargetId] = useState<string | null>(null);
 
     useEffect(() => {
         // 성격 목록 조회
         pipe(
-            listPersonalities(),
-            TE.map((response) => setPersonalities(response.data)),
+            listPersonalitiesAll(),
+            TE.map((response) => setPersonalities(response)),
             TE.mapLeft((error) => console.error(error))
         )();
 
@@ -91,113 +164,7 @@ export default function CreateCharacterPage() {
         )();
     }, []);
 
-    const handleAddField = (
-        setter: React.Dispatch<React.SetStateAction<InputField[]>>,
-        currentFields: InputField[]
-    ) => {
-        setter([...currentFields, { id: Date.now().toString(), value: "" }]);
-    };
-
-    const handleRemoveField = (
-        setter: React.Dispatch<React.SetStateAction<InputField[]>>,
-        currentFields: InputField[],
-        id: string
-    ) => {
-        setter(currentFields.filter((field) => field.id !== id));
-    };
-
-    const handleFieldChange = (
-        setter: React.Dispatch<React.SetStateAction<InputField[]>>,
-        currentFields: InputField[],
-        id: string,
-        value: string,
-        fieldType: "position" | "skill"
-    ) => {
-        const newFields = currentFields.map((field) => (field.id === id ? { ...field, value } : field));
-        setter(newFields);
-
-        // Validate each field
-        const newErrors: ValidationErrors = { ...errors };
-        newFields.forEach((field, index) => {
-            if (!field.value.trim()) {
-                newErrors[`${fieldType}_${index}`] = `${fieldType === "position" ? "포지션" : "스킬"}을 입력해주세요`;
-            } else {
-                delete newErrors[`${fieldType}_${index}`];
-            }
-        });
-        setErrors(newErrors);
-    };
-
-    const handleSourceChange = (id: string, field: keyof SourceField, value: string, type: "resume" | "portfolio") => {
-        const newSources =
-            type === "resume"
-                ? resumes.map((resume) =>
-                      resume.id === id
-                          ? {
-                                ...resume,
-                                [field]: value,
-                                // type이 변경될 때 url 초기화
-                                ...(field === "type" && { url: "" }),
-                            }
-                          : resume
-                  )
-                : portfolios.map((portfolio) =>
-                      portfolio.id === id
-                          ? {
-                                ...portfolio,
-                                [field]: value,
-                                // type이 변경될 때 url 초기화
-                                ...(field === "type" && { url: "" }),
-                            }
-                          : portfolio
-                  );
-
-        if (type === "resume") {
-            setResumes(newSources);
-        } else {
-            setPortfolios(newSources);
-        }
-
-        // Validate URL
-        if (field === "url") {
-            const newErrors: ValidationErrors = { ...errors };
-            const sourceIndex = newSources.findIndex((s) => s.id === id);
-
-            if (!value.trim()) {
-                newErrors[`${type}_${sourceIndex}`] = `${
-                    type === "resume" ? "이력서" : "포트폴리오"
-                } URL을 입력해주세요`;
-            } else if (!isValidUrl(value)) {
-                newErrors[`${type}_${sourceIndex}`] = "올바른 URL 형식이 아닙니다";
-            } else {
-                delete newErrors[`${type}_${sourceIndex}`];
-            }
-
-            setErrors(newErrors);
-        }
-    };
-
-    const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newNickname = e.target.value;
-        setNickname(newNickname);
-
-        const nicknameRules = [
-            required("닉네임을 입력해주세요"),
-            minLength(2, "닉네임은 2자 이상 입력해주세요"),
-            maxLength(20, "닉네임은 20자까지 입력 가능합니다"),
-        ];
-
-        const result = validateForm({ nickname: newNickname }, { nickname: nicknameRules });
-        const newErrors = { ...errors };
-        if (result.nickname.isValid) {
-            delete newErrors.nickname;
-        } else {
-            newErrors.nickname = result.nickname.message;
-        }
-        setErrors(newErrors);
-    };
-
-    const handlePersonalitiesChange = (newPersonalities: Personality[]) => {
+    const handlePersonalitiesChange = (newPersonalities: InputField[]) => {
         setTempSelectedPersonalities(newPersonalities);
     };
 
@@ -206,114 +173,73 @@ export default function CreateCharacterPage() {
     };
 
     const handlePersonalitiesConfirm = () => {
-        setSelectedPersonalities(tempSelectedPersonalities);
-        const result = validateForm(
-            { selectedPersonalities: tempSelectedPersonalities },
-            { selectedPersonalities: [minItems(1, "최소 1개 이상의 성격을 선택해주세요")] }
-        );
-        const newErrors = { ...errors };
-        if (result.selectedPersonalities.isValid) {
-            delete newErrors.selectedPersonalities;
-        } else {
-            newErrors.selectedPersonalities = result.selectedPersonalities.message;
-        }
-        setErrors(newErrors);
+        defaultSetValue("personalities", tempSelectedPersonalities, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+        });
         setPersonalityModalOpen(false);
     };
 
     const handleExperiencesConfirm = () => {
-        setSelectedExperiences(tempSelectedExperiences);
-        const result = validateForm(
-            { selectedExperiences: tempSelectedExperiences },
-            { selectedExperiences: [minItems(1, "최소 1개 이상의 경험을 선택해주세요")] }
-        );
-        const newErrors = { ...errors };
-        if (result.selectedExperiences.isValid) {
-            delete newErrors.selectedExperiences;
-        } else {
-            newErrors.selectedExperiences = result.selectedExperiences.message;
-        }
-        setErrors(newErrors);
+        defaultSetValue("experiences", tempSelectedExperiences, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+        });
         setExperienceModalOpen(false);
     };
 
-    const validateInputs = () => {
-        const validationRules = {
-            nickname: [
-                required("닉네임을 입력해주세요"),
-                minLength(2, "닉네임은 2자 이상 입력해주세요"),
-                maxLength(20, "닉네임은 20자까지 입력 가능합니다"),
-            ],
-            selectedPersonalities: [minItems(1, "최소 1개 이상의 성격을 선택해주세요")],
-            selectedExperiences: [minItems(1, "최소 1개 이상의 경험을 선택해주세요")],
-        };
+    const handleSubmit = async () => {
+        const isDefaultValid = await defaultTrigger();
+        const isResumeValid = await resumeTrigger();
+        const isPortfolioValid = await portfolioTrigger();
 
-        const values = {
-            nickname,
-            selectedPersonalities,
-            selectedExperiences,
-            positions: positions.filter((p) => p.value.trim()),
-            skills: skills.filter((s) => s.value.trim()),
-            resumes: resumes.filter((r) => r.url.trim()),
-        };
+        if (!isDefaultValid || !isResumeValid || !isPortfolioValid) {
+            const scrollToFirstError = () => {
+                if (!isDefaultValid) {
+                    const element = document.getElementById("nickname");
+                    if (element) {
+                        element.scrollIntoView({ behavior: "smooth", block: "center" });
+                        return;
+                    }
+                }
 
-        const validationResults = validateForm(values, validationRules);
-        const newErrors: ValidationErrors = {};
+                if (!isResumeValid) {
+                    const element = document.getElementById("resume-section");
+                    if (element) {
+                        element.scrollIntoView({ behavior: "smooth", block: "center" });
+                        return;
+                    }
+                }
+                if (!isPortfolioValid) {
+                    const element = document.getElementById("portfolio-section");
+                    if (element) {
+                        element.scrollIntoView({ behavior: "smooth", block: "center" });
+                        return;
+                    }
+                }
+            };
 
-        for (const [key, result] of Object.entries(validationResults)) {
-            if (!result.isValid) {
-                newErrors[key] = result.message;
-            }
-        }
+            scrollToFirstError();
 
-        // 동적 필드 검증 (빈 값 체크)
-        positions.forEach((position, index) => {
-            if (!position.value.trim()) {
-                newErrors[`position_${index}`] = "포지션을 입력해주세요";
-            }
-        });
-
-        skills.forEach((skill, index) => {
-            if (!skill.value.trim()) {
-                newErrors[`skill_${index}`] = "스킬을 입력해주세요";
-            }
-        });
-
-        resumes.forEach((resume, index) => {
-            if (!resume.url.trim()) {
-                newErrors[`resume_${index}`] = "이력서 URL을 입력해주세요";
-            } else if (!isValidUrl(resume.url)) {
-                newErrors[`resume_${index}`] = "올바른 URL 형식이 아닙니다";
-            }
-        });
-
-        // 포트폴리오는 필수가 아니므로 URL 형식만 검증
-        portfolios.forEach((portfolio, index) => {
-            if (portfolio.url.trim() && !isValidUrl(portfolio.url)) {
-                newErrors[`portfolio_${index}`] = "올바른 URL 형식이 아닙니다";
-            }
-        });
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = () => {
-        if (!validateInputs()) {
             return;
         }
 
         const request: CharacterCreateRequest = {
-            nickname,
-            isPublic,
-            image,
-            personalities: selectedPersonalities.map((p) => ({ id: p.id })),
-            experiences: selectedExperiences.map((e) => ({ id: e.id })),
-            positions: positions.map((p) => ({ keyword: p.value })),
-            skills: skills.map((s) => ({ keyword: s.value })),
-            sources: [...resumes, ...portfolios].map((s) => ({ type: s.type, subtype: s.subtype, url: s.url })),
+            nickname: defaultWatch("nickname"),
+            isPublic: defaultWatch("isPublic"),
+            image: image,
+            personalities: tempSelectedPersonalities.map((p) => ({ id: p.id })),
+            experiences: tempSelectedExperiences.map((e) => ({ id: e.id })),
+            positions: defaultWatch("positions").map((p) => ({ keyword: p.keyword })),
+            skills: defaultWatch("skills").map((s) => ({ keyword: s.keyword })),
+            sources: [...resumeGetValues("resumes"), ...portfolioGetValues("portfolios")].map((s) => ({
+                type: s.type,
+                subtype: s.subtype,
+                url: s.url,
+            })),
         };
-
         pipe(
             createCharacter(request),
             TE.map(() => router.push("/characters")),
@@ -323,12 +249,11 @@ export default function CreateCharacterPage() {
 
     const handleImageChange = (file: File) => {
         if (file) {
-            // const reader = new FileReader();
-            // reader.onloadend = () => {
-            //     setImage(reader.result as string);
-            // };
-            // reader.readAsDataURL(file);
-            asyncUploadFile(file);
+            pipe(
+                uploadFile(file),
+                TE.map((response) => setImage(response.data)),
+                TE.mapLeft((error) => console.error(error))
+            )();
         }
     };
 
@@ -348,96 +273,6 @@ export default function CreateCharacterPage() {
         const file = e.dataTransfer.files[0];
         if (file && file.type.startsWith("image/")) {
             handleImageChange(file);
-        }
-    };
-
-    const asyncUploadFile = (file: File) => {
-        pipe(
-            uploadFile(file),
-            TE.map((response) => setImage(response.data)),
-            TE.mapLeft((error) => console.error(error))
-        )();
-    };
-
-    const handleFileUpload = async (file: File, sourceId: string, type: "resume" | "portfolio") => {
-        if (file) {
-            // 파일명 저장
-            setFileNames((prev) => ({ ...prev, [sourceId]: file.name }));
-
-            pipe(
-                uploadFile(file),
-                TE.map((response) => {
-                    if (type === "resume") {
-                        setResumes(
-                            resumes.map((resume) =>
-                                resume.id === sourceId ? { ...resume, url: response.data } : resume
-                            )
-                        );
-                    } else {
-                        setPortfolios(
-                            portfolios.map((portfolio) =>
-                                portfolio.id === sourceId ? { ...portfolio, url: response.data } : portfolio
-                            )
-                        );
-                    }
-                }),
-                TE.mapLeft((error) => console.error(error))
-            )();
-        }
-    };
-
-    // 파일 아이콘을 결정하는 함수 추가
-    const getFileIcon = (fileName: string) => {
-        if (!fileName) return <FiFile className="h-5 w-5" />;
-
-        const extension = fileName.split(".").pop()?.toLowerCase();
-
-        switch (extension) {
-            case "pdf":
-                return <FiFileText className="h-5 w-5 text-red-500" />;
-            case "doc":
-            case "docx":
-                return <FiFileText className="h-5 w-5 text-blue-500" />;
-            case "jpg":
-            case "jpeg":
-            case "png":
-            case "gif":
-                return <FiImage className="h-5 w-5 text-green-500" />;
-            default:
-                return <FiFile className="h-5 w-5" />;
-        }
-    };
-
-    const isValidFileType = (file: File, type: "resume" | "portfolio") => {
-        const allowedTypes = [".pdf", ".doc", ".docx", ".md"];
-        const extension = "." + file.name.split(".").pop()?.toLowerCase();
-        return allowedTypes.includes(extension);
-    };
-
-    const handleFileDrop = (e: React.DragEvent, sourceId: string, type: "resume" | "portfolio") => {
-        e.preventDefault();
-        setDragTargetId(null);
-        const file = e.dataTransfer.files[0];
-        if (file) {
-            if (isValidFileType(file, type)) {
-                handleFileUpload(file, sourceId, type);
-            } else {
-                addAlert(
-                    "지원하지 않는 파일 형식입니다. PDF, DOC, DOCX, MD 파일만 업로드 가능합니다.",
-                    "error"
-                );
-            }
-        }
-    };
-
-    const handleFileSelect = (file: File, sourceId: string, type: "resume" | "portfolio") => {
-        if (isValidFileType(file, type)) {
-            handleFileUpload(file, sourceId, type);
-        } else {
-            addAlert(
-                "지원하지 않는 파일 형식입니다. PDF, DOC, DOCX, MD 파일만 업로드 가능합니다.",
-                "error"
-            );
         }
     };
 
@@ -466,14 +301,13 @@ export default function CreateCharacterPage() {
                                 <input
                                     id="nickname"
                                     type="text"
-                                    value={nickname}
-                                    onChange={handleNicknameChange}
+                                    {...defaultRegister("nickname")}
                                     placeholder="닉네임을 입력하세요"
-                                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
-                                        errors.nickname ? "border-red-500" : "border-gray-300 dark:border-gray-600"
-                                    }`}
+                                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700`}
                                 />
-                                {errors.nickname && <p className="mt-1 text-sm text-red-500">{errors.nickname}</p>}
+                                {defaultErrors.nickname && (
+                                    <p className="mt-2 text-sm text-red-500">{defaultErrors.nickname.message}</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1">공개 여부</label>
@@ -481,8 +315,8 @@ export default function CreateCharacterPage() {
                                     <label className="flex items-center gap-2">
                                         <input
                                             type="radio"
-                                            checked={isPublic}
-                                            onChange={() => setIsPublic(true)}
+                                            checked={defaultWatch("isPublic")}
+                                            onChange={() => defaultSetValue("isPublic", true)}
                                             className="h-4 w-4 text-blue-600"
                                         />
                                         <span>공개</span>
@@ -490,8 +324,8 @@ export default function CreateCharacterPage() {
                                     <label className="flex items-center gap-2">
                                         <input
                                             type="radio"
-                                            checked={!isPublic}
-                                            onChange={() => setIsPublic(false)}
+                                            checked={!defaultWatch("isPublic")}
+                                            onChange={() => defaultSetValue("isPublic", false)}
                                             className="h-4 w-4 text-blue-600"
                                         />
                                         <span>비공개</span>
@@ -505,12 +339,8 @@ export default function CreateCharacterPage() {
                                 <div
                                     className={`relative mt-2 ${
                                         image ? "h-64" : "h-48"
-                                    } rounded-lg border-2 border-dashed transition-colors duration-200 flex flex-col items-center justify-center overflow-hidden
-                                    ${
-                                        isDragging
-                                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
-                                    }`}
+                                    } rounded-lg border-2 border-dashed transition-colors duration-200 flex flex-col items-center justify-center overflow-hidden dark:bg-gray-700
+                                    `}
                                     onDragOver={handleDragOver}
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
@@ -540,7 +370,7 @@ export default function CreateCharacterPage() {
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                             />
                                             <div className="text-center">
-                                                <FiPlus className="mx-auto h-12 w-12 text-gray-400" />
+                                                <FiImage className="mx-auto h-12 w-12 text-blue-500 dark:text-blue-400" />
                                                 <div className="mt-4 flex text-sm leading-6 text-gray-600 dark:text-gray-400">
                                                     <span className="relative cursor-pointer rounded-md font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                                                         이미지를 선택하거나
@@ -559,14 +389,14 @@ export default function CreateCharacterPage() {
                     </div>
 
                     {/* 성격 선택 */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <div id="personalities" className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
                                 성격 <span className="text-red-500">*</span>
                             </h2>
                             <button
                                 onClick={() => {
-                                    setTempSelectedPersonalities(selectedPersonalities);
+                                    setTempSelectedPersonalities(defaultWatch("personalities"));
                                     setPersonalityModalOpen(true);
                                 }}
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -575,10 +405,10 @@ export default function CreateCharacterPage() {
                             </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {selectedPersonalities.length === 0 ? (
+                            {defaultWatch("personalities").length === 0 ? (
                                 <p className="text-gray-500">선택된 성격이 없습니다.</p>
                             ) : (
-                                selectedPersonalities.map((personality) => (
+                                defaultWatch("personalities").map((personality) => (
                                     <span
                                         key={personality.id}
                                         className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full"
@@ -588,20 +418,20 @@ export default function CreateCharacterPage() {
                                 ))
                             )}
                         </div>
-                        {errors.selectedPersonalities && (
-                            <p className="mt-2 text-sm text-red-500">{errors.selectedPersonalities}</p>
+                        {defaultErrors.personalities && (
+                            <p className="mt-2 text-sm text-red-500">{defaultErrors.personalities.message}</p>
                         )}
                     </div>
 
                     {/* 경험 선택 */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <div id="experiences" className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
                                 경험 <span className="text-red-500">*</span>
                             </h2>
                             <button
                                 onClick={() => {
-                                    setTempSelectedExperiences(selectedExperiences);
+                                    setTempSelectedExperiences(defaultWatch("experiences"));
                                     setExperienceModalOpen(true);
                                 }}
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -610,10 +440,10 @@ export default function CreateCharacterPage() {
                             </button>
                         </div>
                         <div className="space-y-2">
-                            {selectedExperiences.length === 0 ? (
+                            {defaultWatch("experiences").length === 0 ? (
                                 <p className="text-gray-500">선택된 경험이 없습니다.</p>
                             ) : (
-                                selectedExperiences.map((experience) => (
+                                defaultWatch("experiences").map((experience) => (
                                     <div key={experience.id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                         <div className="font-medium">{experience.companyName}</div>
                                         <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -623,356 +453,108 @@ export default function CreateCharacterPage() {
                                 ))
                             )}
                         </div>
-                        {errors.selectedExperiences && (
-                            <p className="mt-2 text-sm text-red-500">{errors.selectedExperiences}</p>
+                        {defaultErrors.experiences && (
+                            <p className="mt-2 text-sm text-red-500">{defaultErrors.experiences.message}</p>
                         )}
                     </div>
 
                     {/* 포지션 입력 */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <div id="positions" className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
                                 포지션 <span className="text-red-500">*</span>
                             </h2>
                             <button
-                                onClick={() => handleAddField(setPositions, positions)}
+                                onClick={() => appendPositions({ id: Date.now().toString(), keyword: "" })}
                                 className="text-blue-600 hover:text-blue-700 transition-colors"
                             >
                                 <FiPlus className="h-5 w-5" />
                             </button>
                         </div>
                         <div className="space-y-3">
-                            {positions.map((position, index) => (
+                            {defaultWatch("positions").map((position, index) => (
                                 <div key={position.id} className="space-y-1">
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
-                                            value={position.value}
-                                            onChange={(e) =>
-                                                handleFieldChange(
-                                                    setPositions,
-                                                    positions,
-                                                    position.id,
-                                                    e.target.value,
-                                                    "position"
-                                                )
-                                            }
+                                            {...defaultRegister(`positions.${index}.keyword`)}
                                             placeholder="포지션을 입력하세요"
-                                            className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
-                                                errors[`position_${index}`]
-                                                    ? "border-red-500"
-                                                    : "border-gray-300 dark:border-gray-600"
-                                            }`}
+                                            className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700
+                                               
+                                            `}
                                         />
-                                        {positions.length > 1 && (
+                                        {defaultWatch("positions").length > 1 && (
                                             <button
-                                                onClick={() => handleRemoveField(setPositions, positions, position.id)}
+                                                onClick={() => removePositions(index)}
                                                 className="text-red-500 hover:text-red-600 transition-colors"
                                             >
                                                 <FiTrash2 className="h-5 w-5" />
                                             </button>
                                         )}
                                     </div>
-                                    {errors[`position_${index}`] && (
-                                        <p className="text-sm text-red-500">{errors[`position_${index}`]}</p>
+                                    {defaultErrors.positions?.[index]?.keyword && (
+                                        <p className="text-sm mt-2 text-red-500">
+                                            {defaultErrors.positions?.[index]?.keyword?.message}
+                                        </p>
                                     )}
                                 </div>
                             ))}
                         </div>
-                        {errors.positions && <p className="mt-2 text-sm text-red-500">{errors.positions}</p>}
+                        {defaultErrors.positions && (
+                            <p className="mt-2 text-sm text-red-500">{defaultErrors.positions.message}</p>
+                        )}
                     </div>
 
                     {/* 스킬 입력 */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <div id="skills" className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
                                 스킬 <span className="text-red-500">*</span>
                             </h2>
                             <button
-                                onClick={() => handleAddField(setSkills, skills)}
+                                onClick={() => appendSkills({ id: Date.now().toString(), keyword: "" })}
                                 className="text-blue-600 hover:text-blue-700 transition-colors"
                             >
                                 <FiPlus className="h-5 w-5" />
                             </button>
                         </div>
                         <div className="space-y-3">
-                            {skills.map((skill, index) => (
+                            {defaultWatch("skills").map((skill, index) => (
                                 <div key={skill.id} className="space-y-1">
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
-                                            value={skill.value}
-                                            onChange={(e) =>
-                                                handleFieldChange(setSkills, skills, skill.id, e.target.value, "skill")
-                                            }
+                                            value={skill.keyword}
+                                            {...defaultRegister(`skills.${index}.keyword`)}
                                             placeholder="스킬을 입력하세요"
-                                            className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
-                                                errors[`skill_${index}`]
-                                                    ? "border-red-500"
-                                                    : "border-gray-300 dark:border-gray-600"
-                                            }`}
+                                            className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 `}
                                         />
-                                        {skills.length > 1 && (
+                                        {defaultWatch("skills").length > 1 && (
                                             <button
-                                                onClick={() => handleRemoveField(setSkills, skills, skill.id)}
+                                                onClick={() => removeSkills(index)}
                                                 className="text-red-500 hover:text-red-600 transition-colors"
                                             >
                                                 <FiTrash2 className="h-5 w-5" />
                                             </button>
                                         )}
                                     </div>
-                                    {errors[`skill_${index}`] && (
-                                        <p className="text-sm text-red-500">{errors[`skill_${index}`]}</p>
+                                    {defaultErrors.skills?.[index]?.keyword && (
+                                        <p className="text-sm mt-2 text-red-500">
+                                            {defaultErrors.skills?.[index]?.keyword?.message}
+                                        </p>
                                     )}
                                 </div>
                             ))}
                         </div>
-                        {errors.skills && <p className="mt-2 text-sm text-red-500">{errors.skills}</p>}
+                        {defaultErrors.skills && (
+                            <p className="mt-2 text-sm text-red-500">{defaultErrors.skills.message}</p>
+                        )}
                     </div>
 
-                    {/* 소스 입력 */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">
-                                이력서 <span className="text-red-500">*</span>
-                            </h2>
-                            <button
-                                onClick={() =>
-                                    setResumes([
-                                        ...resumes,
-                                        { id: Date.now().toString(), type: "link", subtype: "resume", url: "" },
-                                    ])
-                                }
-                                className="text-blue-600 hover:text-blue-700 transition-colors"
-                            >
-                                <FiPlus className="h-5 w-5" />
-                            </button>
-                        </div>
-                        <div className="space-y-4">
-                            {resumes.map((resume, index) => (
-                                <div key={resume.id} className="space-y-3">
-                                    <div className="flex gap-2">
-                                        <select
-                                            value={resume.type}
-                                            onChange={(e) =>
-                                                handleSourceChange(
-                                                    resume.id,
-                                                    "type",
-                                                    e.target.value as "file" | "link",
-                                                    "resume"
-                                                )
-                                            }
-                                            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
-                                        >
-                                            <option value="file">파일</option>
-                                            <option value="link">링크</option>
-                                        </select>
-                                        {resumes.length > 1 && (
-                                            <button
-                                                onClick={() => setResumes(resumes.filter((s) => s.id !== resume.id))}
-                                                className="text-red-500 hover:text-red-600 transition-colors"
-                                            >
-                                                <FiTrash2 className="h-5 w-5" />
-                                            </button>
-                                        )}
-                                    </div>
-                                    {resume.type === "file" ? (
-                                        <div className="relative">
-                                            <input
-                                                type="file"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) handleFileSelect(file, resume.id, "resume");
-                                                }}
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                accept=".pdf,.doc,.docx,.md"
-                                            />
-                                            <div
-                                                className={`w-full h-32 border-2 border-dashed rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 
-                                                ${dragTargetId === resume.id ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}
-                                                ${resume.url ? "border-green-500 dark:border-green-400" : "border-gray-300 dark:border-gray-600"}
-                                                flex flex-col items-center justify-center gap-2 transition-colors duration-200 group hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20`}
-                                                onDragOver={(e) => {
-                                                    e.preventDefault();
-                                                    setDragTargetId(resume.id);
-                                                }}
-                                                onDragLeave={(e) => {
-                                                    e.preventDefault();
-                                                    setDragTargetId(null);
-                                                }}
-                                                onDrop={(e) => handleFileDrop(e, resume.id, "resume")}
-                                            >
-                                                {resume.url ? (
-                                                    <div className="flex items-center gap-3">
-                                                        {getFileIcon(fileNames[resume.id])}
-                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">
-                                                            {fileNames[resume.id] || "파일이 업로드됨"}
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
-                                                            <FiUpload className="h-6 w-6 text-blue-500 dark:text-blue-400" />
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                                <span className="text-blue-500 dark:text-blue-400 font-medium">파일을 선택</span>하거나 드래그하여 업로드
-                                                            </p>
-                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                                PDF, DOC, DOCX, MD (최대 10MB)
-                                                            </p>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <input
-                                                type="text"
-                                                value={resume.url}
-                                                onChange={(e) =>
-                                                    handleSourceChange(resume.id, "url", e.target.value, "resume")
-                                                }
-                                                placeholder="URL을 입력하세요"
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
-                                                    errors[`resume_${index}`]
-                                                        ? "border-red-500"
-                                                        : "border-gray-300 dark:border-gray-600"
-                                                }`}
-                                            />
-                                        </>
-                                    )}
-                                    {checkNotionUrl(resume.url) && (
-                                        <p className="text-sm text-red-500">노션 URL입니다.</p>
-                                    )}
-                                    {errors[`resume_${index}`] && (
-                                        <p className="text-sm text-red-500">{errors[`resume_${index}`]}</p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">포트폴리오</h2>
-                            <button
-                                onClick={() =>
-                                    setPortfolios([
-                                        ...portfolios,
-                                        { id: Date.now().toString(), type: "link", subtype: "portfolio", url: "" },
-                                    ])
-                                }
-                                className="text-blue-600 hover:text-blue-700 transition-colors"
-                            >
-                                <FiPlus className="h-5 w-5" />
-                            </button>
-                        </div>
-                        <div className="space-y-4">
-                            {portfolios.map((portfolio, index) => (
-                                <div key={portfolio.id} className="space-y-3">
-                                    <div className="flex gap-2">
-                                        <select
-                                            value={portfolio.type}
-                                            onChange={(e) =>
-                                                handleSourceChange(
-                                                    portfolio.id,
-                                                    "type",
-                                                    e.target.value as "file" | "link",
-                                                    "portfolio"
-                                                )
-                                            }
-                                            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
-                                        >
-                                            <option value="file">파일</option>
-                                            <option value="link">링크</option>
-                                        </select>
-                                        {portfolios.length > 1 && (
-                                            <button
-                                                onClick={() =>
-                                                    setPortfolios(portfolios.filter((s) => s.id !== portfolio.id))
-                                                }
-                                                className="text-red-500 hover:text-red-600 transition-colors"
-                                            >
-                                                <FiTrash2 className="h-5 w-5" />
-                                            </button>
-                                        )}
-                                    </div>
-                                    {portfolio.type === "file" ? (
-                                        <div className="relative">
-                                            <input
-                                                type="file"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) handleFileSelect(file, portfolio.id, "portfolio");
-                                                }}
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                accept=".pdf,.doc,.docx,.md"
-                                            />
-                                            <div
-                                                className={`w-full h-32 border-2 border-dashed rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 
-                                                ${dragTargetId === portfolio.id ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}
-                                                ${portfolio.url ? "border-green-500 dark:border-green-400" : "border-gray-300 dark:border-gray-600"}
-                                                flex flex-col items-center justify-center gap-2 transition-colors duration-200 group hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20`}
-                                                onDragOver={(e) => {
-                                                    e.preventDefault();
-                                                    setDragTargetId(portfolio.id);
-                                                }}
-                                                onDragLeave={(e) => {
-                                                    e.preventDefault();
-                                                    setDragTargetId(null);
-                                                }}
-                                                onDrop={(e) => handleFileDrop(e, portfolio.id, "portfolio")}
-                                            >
-                                                {portfolio.url ? (
-                                                    <div className="flex items-center gap-3">
-                                                        {getFileIcon(fileNames[portfolio.id])}
-                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">
-                                                            {fileNames[portfolio.id] || "파일이 업로드됨"}
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
-                                                            <FiUpload className="h-6 w-6 text-blue-500 dark:text-blue-400" />
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                                <span className="text-blue-500 dark:text-blue-400 font-medium">파일을 선택</span>하거나 드래그하여 업로드
-                                                            </p>
-                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                                PDF, DOC, DOCX, MD (최대 10MB)
-                                                            </p>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <input
-                                            type="text"
-                                            value={portfolio.url}
-                                            onChange={(e) =>
-                                                handleSourceChange(portfolio.id, "url", e.target.value, "portfolio")
-                                            }
-                                            placeholder="URL을 입력하세요"
-                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 ${
-                                                errors[`portfolio_${index}`]
-                                                    ? "border-red-500"
-                                                    : "border-gray-300 dark:border-gray-600"
-                                            }`}
-                                        />
-                                    )}
-
-                                    {errors[`portfolio_${index}`] && (
-                                        <p className="text-sm text-red-500">{errors[`portfolio_${index}`]}</p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
+                    <div id="resume-section" />
+                    <ResumeForm register={resumeRegister} control={resumeControl} errors={resumeErrors} />
+                    <div id="portfolio-section" />
+                    <PortfolioForm register={portfolioRegister} control={portfolioControl} errors={portfolioErrors} />
                     <div className="flex justify-end gap-4">
                         <button
                             onClick={() => router.back()}
@@ -998,13 +580,13 @@ export default function CreateCharacterPage() {
                 onConfirm={handlePersonalitiesConfirm}
             >
                 <Listbox value={tempSelectedPersonalities} onChange={handlePersonalitiesChange} multiple>
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    <div className="grid grid-cols-4 gap-3 max-h-[400px] overflow-y-auto custom-scrollbar">
                         {personalities.map((personality) => (
                             <Listbox.Option
                                 key={personality.id}
                                 value={personality}
                                 className={({ active, selected }) =>
-                                    `relative cursor-pointer select-none p-4 rounded-lg flex items-center ${
+                                    `relative cursor-pointer select-none p-3 rounded-lg ${
                                         selected
                                             ? "bg-blue-50 dark:bg-blue-900/50 border-2 border-blue-500 dark:border-blue-400"
                                             : active
@@ -1014,18 +596,16 @@ export default function CreateCharacterPage() {
                                 }
                             >
                                 {({ selected }) => (
-                                    <>
-                                        <div className="flex-1">
-                                            <span className={`block ${selected ? "font-medium" : "font-normal"}`}>
-                                                {personality.keyword}
-                                            </span>
-                                        </div>
+                                    <div className="flex flex-col items-center text-center">
+                                        <span className={`block truncate ${selected ? "font-medium" : "font-normal"}`}>
+                                            {personality.keyword}
+                                        </span>
                                         {selected && (
-                                            <div className="text-blue-500 dark:text-blue-400">
-                                                <FiCheck className="h-5 w-5" />
+                                            <div className="text-blue-500 dark:text-blue-400 mt-1">
+                                                <FiCheck className="h-4 w-4" />
                                             </div>
                                         )}
-                                    </>
+                                    </div>
                                 )}
                             </Listbox.Option>
                         ))}
@@ -1040,7 +620,11 @@ export default function CreateCharacterPage() {
                 title="경험 선택"
                 onConfirm={handleExperiencesConfirm}
             >
-                <Listbox value={tempSelectedExperiences} onChange={handleExperiencesChange} multiple>
+                <Listbox
+                    value={tempSelectedExperiences}
+                    onChange={(newExperiences) => handleExperiencesChange(newExperiences)}
+                    multiple
+                >
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                         {experiences.map((experience) => (
                             <Listbox.Option
