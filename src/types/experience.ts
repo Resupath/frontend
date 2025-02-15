@@ -6,7 +6,7 @@ interface Experience {
     id: string;
     companyName: string;
     position: string;
-    description: string;
+    description: string | null;
     startDate: string;
     sequence: number;
     endDate: string;
