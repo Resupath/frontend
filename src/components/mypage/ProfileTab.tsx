@@ -11,9 +11,14 @@ import { notionVerify } from "@/src/types/auth";
 import { useAlertStore } from "@/src/stores/useAlertStore";
 import { SiNotion } from "react-icons/si";
 import { notionLogin } from "@/src/utils/notion";
-export default function ProfileTab() {
+
+interface ProfileTabProps {
+    initialData: Member | null;
+}
+
+export default function ProfileTab({ initialData }: ProfileTabProps) {
     const { addAlert } = useAlertStore();
-    const [info, setInfo] = useState<Member | null>(null);
+    const [info, setInfo] = useState<Member | null>(initialData);
     const [isVerified, setIsVerified] = useState<boolean>(false);
     const router = useRouter();
 
@@ -36,9 +41,11 @@ export default function ProfileTab() {
     };
 
     useEffect(() => {
-        asyncGetMyInfo();
+        if (!initialData) {
+            asyncGetMyInfo();
+        }
         asyncNotionVerify();
-    }, []);
+    }, [initialData]);
 
     return (
         <div className="space-y-6">

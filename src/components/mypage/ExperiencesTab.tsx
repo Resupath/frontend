@@ -13,8 +13,12 @@ import { FiPlus, FiTrash2, FiEdit } from "react-icons/fi";
 import * as TE from "fp-ts/TaskEither";
 import * as O from "fp-ts/Option";
 
-export default function ExperiencesTab() {
-    const [experiences, setExperiences] = useState<Experience[]>([]);
+interface ExperiencesTabProps {
+    initialData: Experience[];
+}
+
+export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
+    const [experiences, setExperiences] = useState<Experience[]>(initialData);
     const [selectedExperience, setSelectedExperience] = useState<O.Option<Experience>>(O.none);
     const [newExperiences, setNewExperiences] = useState<Omit<ExperienceCreateRequest, "sequence">[]>([
         {
@@ -229,12 +233,14 @@ export default function ExperiencesTab() {
     };
 
     useEffect(() => {
-        pipe(
-            listExperiences(),
-            TE.map(setExperiences),
-            TE.mapLeft((error) => console.error(error))
-        )();
-    }, []);
+        if (initialData.length === 0) {
+            pipe(
+                listExperiences(),
+                TE.map(setExperiences),
+                TE.mapLeft((error) => console.error(error))
+            )();
+        }
+    }, [initialData]);
 
     return (
         <div className="space-y-6">

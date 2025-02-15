@@ -1,4 +1,6 @@
-import ProfileTab from "@/src/components/mypage/ProfileTab";
+import { Tab } from "@headlessui/react";
+import ExperiencesTab from "@/src/components/mypage/ExperiencesTab";
+
 import { api } from "@/src/utils/api";
 import { cookies } from "next/headers";
 
@@ -6,21 +8,21 @@ export default async function MyPage() {
     const cookieStore = await cookies();
     const auth = cookieStore.get("auth");
 
-    const getMyInfoInServerSide = async () => {
+    const getExperiencesInServerSide = async () => {
         try {
-            const memberInfo = await api.get("/members/info", {
+            const experiences = await api.get("/experiences", {
                 headers: {
                     "X-Member": `Bearer ${auth?.value}`,
                 },
             });
-            return memberInfo.data;
+            return experiences.data;
         } catch (error) {
             console.error(error);
-            return null;
+            return [];
         }
     };
 
-    const memberInfo = await getMyInfoInServerSide();
+    const experiences = await getExperiencesInServerSide();
 
     return (
         <main className="w-full h-full overflow-y-auto">
@@ -32,19 +34,19 @@ export default async function MyPage() {
                         <div className="flex space-x-1 rounded-xl bg-surface p-1 mb-8">
                             <a
                                 href="/mypage"
-                                className="w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-center cursor-pointer text-blue-500"
+                                className="w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-center cursor-pointer"
                             >
                                 프로필
                             </a>
                             <a
                                 href="/mypage/experience"
-                                className="w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-center cursor-pointer"
+                                className="w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-center cursor-pointer text-blue-500"
                             >
                                 경력
                             </a>
                         </div>
                         <div className="rounded-xl">
-                            <ProfileTab initialData={memberInfo} />
+                            <ExperiencesTab initialData={experiences} />
                         </div>
                     </div>
                 </div>
