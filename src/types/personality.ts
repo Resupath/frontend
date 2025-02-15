@@ -28,5 +28,14 @@ const listPersonalities = (): TE.TaskEither<Error, Pagination<Personality>> =>
         (error) => new Error("Failed to fetch personalities")
     );
 
+const listPersonalitiesAll = (): TE.TaskEither<Error, Personality[]> =>
+    TE.tryCatch(
+        async () => {
+            const response = await api.get<Personality[]>("/personalities/all");
+            return response.data;
+        },
+        (error) => new Error("Failed to fetch personalities")
+    );
+
 export type { Personality, PersonalityCreateRequest };
-export { createPersonality, listPersonalities };
+export { createPersonality, listPersonalities, listPersonalitiesAll };
