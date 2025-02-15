@@ -1,4 +1,5 @@
 import ExperiencesTab from "@/src/components/mypage/ExperiencesTab";
+import { MyPageNavigate } from "@/src/components/mypage/MyPageNavigate";
 import { api } from "@/src/utils/api";
 import { cookies } from "next/headers";
 
@@ -29,20 +30,7 @@ export default async function MyPage() {
                     <h1 className="text-3xl font-bold mb-8">마이페이지</h1>
 
                     <div>
-                        <div className="flex space-x-1 rounded-xl bg-surface p-1 mb-8">
-                            <a
-                                href="/mypage"
-                                className="w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-center cursor-pointer"
-                            >
-                                프로필
-                            </a>
-                            <a
-                                href="/mypage/experience"
-                                className="w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-center cursor-pointer text-blue-500"
-                            >
-                                경력
-                            </a>
-                        </div>
+                        <MyPageNavigate />
                         <div className="rounded-xl">
                             <ExperiencesTab initialData={experiences} />
                         </div>
