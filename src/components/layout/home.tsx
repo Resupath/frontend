@@ -16,7 +16,7 @@ const Home: FC<{
                 <div className="w-full h-full flex flex-row">
                     <Sidebar />
                     <div className="w-full h-full flex flex-col">
-                        {/* <Header /> */}
+                        <Header />
                         <div className="w-full flex-1 basis-0 overflow-y-auto">{children}</div>
                     </div>
                 </div>
