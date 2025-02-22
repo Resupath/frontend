@@ -14,6 +14,7 @@ export default {
                 primary: "var(--primary)",
                 "on-primary": "var(--on-primary)",
                 secondary: "var(--secondary)",
+                "on-secondary": "var(--on-secondary)",
                 background: "var(--background)",
                 foreground: "var(--foreground)",
                 text: "var(--text)",
