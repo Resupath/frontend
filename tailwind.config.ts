@@ -12,6 +12,7 @@ export default {
         extend: {
             colors: {
                 primary: "var(--primary)",
+                "on-primary": "var(--on-primary)",
                 secondary: "var(--secondary)",
                 background: "var(--background)",
                 foreground: "var(--foreground)",

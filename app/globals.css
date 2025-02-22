@@ -4,7 +4,8 @@
 
 :root {
     /* 라이트 모드 기본 색상 */
-    --primary: #0066ff; /* 밝은 파란색 - 주요 액션 */
+    --primary: #4dcacd;
+    --on-primary: #ffffff; /* Primary 배경 위의 텍스트/아이콘 색상 */
     --secondary: #6b7280; /* 중간 회색 - 보조 액션 */
     --background: #ffffff; /* 순수 흰색 - 메인 배경 */
     --foreground: #f8fafc; /* 매우 연한 회색 - 카드/섹션 배경 */
@@ -16,7 +17,8 @@
 
 .dark {
     /* 다크 모드 색상 */
-    --primary: #3b82f6;
+    --primary: #3eaaad; /* 기존 primary 색상보다 약 20% 어두운 톤 */
+    --on-primary: #ffffff; /* 다크모드에서도 동일하게 흰색 사용 */
     --secondary: #6366f1;
     --background: #191919;
     --foreground: #202020;
