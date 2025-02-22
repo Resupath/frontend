@@ -11,7 +11,7 @@ export default function CharacterCard({ character, onClick }: CharacterCardProps
     return (
         <div
             onClick={() => onClick(character)}
-            className="cursor-pointer relative h-full overflow-hidden border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg"
+            className="cursor-pointer relative h-full overflow-hidden border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
         >
             <div className="bg-white dark:bg-gray-800  overflow-hidden h-2/3 relative group">
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-4 h-full">
@@ -27,7 +27,7 @@ export default function CharacterCard({ character, onClick }: CharacterCardProps
                 {character.image ? (
                     <img src={character.image} alt={character.nickname} className="w-full h-full object-cover" />
                 ) : (
-                    <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                         <FiUser className="w-20 h-20 text-gray-400 dark:text-gray-500" />
                     </div>
                 )}
