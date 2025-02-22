@@ -59,12 +59,12 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
             retrieveCharacter(character.id),
             TE.map((character) => {
                 setSelectedCharacter(O.some(character));
-                setSidebarWidth(384);
+                setSidebarWidth(600);
             }),
             TE.mapLeft((error) => {
                 console.error("Failed to fetch character details:", error);
-                setSelectedCharacter(O.some(character));
-                setSidebarWidth(384);
+                setSelectedCharacter(O.none);
+                setSidebarWidth(0);
             })
         )();
     }
