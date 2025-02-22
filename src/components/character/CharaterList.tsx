@@ -111,7 +111,7 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="캐릭터 검색..."
                                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                                         bg-gray-50 dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:outline-none"
+                                         bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none"
                             />
                         </div>
                     </div>
@@ -160,7 +160,7 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
 
             <div
                 style={{ width: `${sidebarWidth}px` }}
-                className={`fixed top-0 right-0 h-full bg-foreground shadow-xl transform transition-transform duration-300 ease-in-out ${
+                className={`fixed top-0 right-0 h-full bg-background shadow-xl border-l border-gray-300 dark:border-gray-700 transform transition-transform duration-300 ease-in-out ${
                     sidebarWidth > 0 ? "translate-x-0" : "translate-x-full"
                 }`}
             >
@@ -189,22 +189,38 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                     </div>
 
                                     <div className="flex-1 p-6 overflow-y-auto">
-                                        <div className="flex flex-col items-center mb-8">
-                                            {character.image ? (
-                                                <img
-                                                    src={character.image}
-                                                    alt={character.nickname}
-                                                    className="w-32 h-32 rounded-full object-cover mb-4"
-                                                />
-                                            ) : (
-                                                <div className="w-32 h-32 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
-                                                    <FiUser className="w-16 h-16 text-gray-400" />
-                                                </div>
-                                            )}
-                                            <h2 className="text-2xl font-bold mb-1">{character.nickname}</h2>
-                                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                {character.experienceYears}년차 백엔드 개발자
+                                        <div className="flex items-center gap-6 mb-8">
+                                            <div className="flex-shrink-0">
+                                                {character.image ? (
+                                                    <img
+                                                        src={character.image}
+                                                        alt={character.nickname}
+                                                        className="w-32 h-32 rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-32 h-32 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                                                        <FiUser className="w-16 h-16 text-gray-400" />
+                                                    </div>
+                                                )}
                                             </div>
+                                            <div className="flex flex-col">
+                                                <h2 className="text-2xl font-bold">{character.nickname}</h2>
+                                                <div className="text-lg text-gray-600 dark:text-gray-400 mb-2">
+                                                    {character.experienceYears}년차 {character.positions[0].keyword}
+                                                </div>
+                                                <div className="flex gap-3">
+                                                    {/* TODO : 연결된 소셜 미디어 아이콘 추가 */}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="w-full mb-4">
+                                            <button
+                                                onClick={() => asyncCreateRoom(character.id)}
+                                                className="w-full px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
+                                            >
+                                                면접 진행하기
+                                            </button>
                                         </div>
 
                                         <div className="space-y-6">
@@ -214,23 +230,9 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                                     {character.personalities?.map((personality, index) => (
                                                         <span
                                                             key={index}
-                                                            className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md text-sm"
+                                                            className="px-3 py-1 bg-gray-50 text-gray-500 dark:text-gray-400 dark:bg-gray-800 rounded-md text-sm"
                                                         >
                                                             {personality.keyword}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <h3 className="text-lg font-semibold mb-2">포지션</h3>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {character.positions?.map((position, index) => (
-                                                        <span
-                                                            key={index}
-                                                            className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-md text-sm"
-                                                        >
-                                                            {position.keyword}
                                                         </span>
                                                     ))}
                                                 </div>
@@ -242,7 +244,7 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                                     {character.skills?.map((skill, index) => (
                                                         <span
                                                             key={index}
-                                                            className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-md text-sm"
+                                                            className="px-3 py-1 bg-secondary text-on-secondary rounded-md text-sm"
                                                         >
                                                             {skill.keyword}
                                                         </span>
@@ -252,48 +254,35 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
 
                                             <div>
                                                 <h3 className="text-lg font-semibold mb-2">경력사항</h3>
-                                                <div className="space-y-3">
+                                                <div className="space-y-4">
                                                     {character.experiences?.map((experience, index) => (
                                                         <div
                                                             key={index}
-                                                            className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                                                            className="p-5 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all"
                                                         >
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                <div className="font-medium text-base">
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <h4 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
                                                                     {experience.companyName}
-                                                                </div>
-                                                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                                    {experience.startDate} -{" "}
-                                                                    {experience.endDate || "현재"}
-                                                                </div>
+                                                                </h4>
                                                             </div>
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <span className="py-1  text-blue-800 dark:text-blue-200 text-sm rounded">
+                                                            <div className="mb-1">
+                                                                <span className="py-1 text-sm rounded-full font-medium">
                                                                     {experience.position}
                                                                 </span>
                                                             </div>
                                                             {experience.description && (
-                                                                <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                                                                <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line leading-relaxed mb-1">
                                                                     {experience.description}
-                                                                </div>
+                                                                </p>
                                                             )}
+                                                            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                                                                {experience.startDate} - {experience.endDate || "현재"}
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-2">
-                                        <button className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                                            커피챗하기
-                                        </button>
-                                        <button
-                                            onClick={() => asyncCreateRoom(character.id)}
-                                            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                                        >
-                                            면접 진행하기
-                                        </button>
                                     </div>
                                 </div>
                             )
