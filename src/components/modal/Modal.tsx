@@ -5,6 +5,7 @@ interface IProps {
     children: React.ReactNode;
     isOpen: boolean;
     onClose: () => void;
+    rounded?: boolean;
 }
 
 /**
@@ -26,7 +27,7 @@ export const Modal: FC<IProps> & {
     Header: typeof Header;
     Body: typeof Body;
     Footer: typeof Footer;
-} = ({ children, isOpen, onClose }) => {
+} = ({ children, isOpen, onClose, rounded = false }) => {
     const [isVisible, setIsVisible] = useState(false);
 
     const HeaderContent = React.Children.toArray(children).find(
@@ -58,7 +59,8 @@ export const Modal: FC<IProps> & {
                 onClick={(e) => e.stopPropagation()}
                 className={`bg-background text-text w-auto
                     transition-all duration-200 ease-in-out
-                    ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+                    ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
+                    ${rounded ? "rounded-lg" : ""}`}
             >
                 {HeaderContent}
                 {BodyContent}
