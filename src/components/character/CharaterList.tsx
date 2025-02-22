@@ -114,9 +114,51 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="캐릭터 검색..."
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                className="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
                                          bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none"
                             />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+                        {/* 자주 검색되는 키워드 */}
+                        <div className="mt-3">
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    // 프론트엔드
+                                    { category: "프론트엔드", keywords: ["React", "TypeScript", "Next.js", "Vue.js"] },
+                                    // 백엔드
+                                    { category: "백엔드", keywords: ["Spring", "Node.js", "Django", "Java"] },
+                                    // 데브옵스
+                                    { category: "데브옵스", keywords: ["Docker", "Kubernetes", "AWS", "CI/CD"] },
+                                ].map((group) => (
+                                    <div key={group.category} className="flex items-center gap-2">
+                                        {group.keywords.map((keyword) => (
+                                            <button
+                                                key={keyword}
+                                                onClick={() => setSearchQuery(keyword)}
+                                                className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 
+                                                         dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 
+                                                         transition-colors"
+                                            >
+                                                {keyword}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
