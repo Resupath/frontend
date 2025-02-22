@@ -24,7 +24,7 @@ export const ResumeForm: FC<ResumeFormProps> = ({ register, control, errors }) =
     const resumes = useWatch({ control, name: "resumes" });
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">
                     이력서 <span className="text-red-500">*</span>
@@ -38,7 +38,7 @@ export const ResumeForm: FC<ResumeFormProps> = ({ register, control, errors }) =
                             url: "",
                         })
                     }
-                    className="text-blue-600 hover:text-blue-700 transition-colors"
+                    className="text-primary transition-colors"
                 >
                     <FiPlus className="h-5 w-5" />
                 </button>

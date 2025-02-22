@@ -117,9 +117,9 @@ export const FileUploadForm: FC<FileUploadFormProps> = ({ onChange, accept = ".p
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center gap-2">
-                            <FiUpload className="h-6 w-6 text-blue-500 dark:text-blue-400" />
+                            <FiUpload className="h-6 w-6 text-primary dark:text-primary" />
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                <span className="text-blue-500 dark:text-blue-400 font-medium">파일을 선택</span>
+                                <span className="text-primary dark:text-primary font-medium">파일을 선택</span>
                                 하거나 드래그하여 업로드
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

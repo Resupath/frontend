@@ -291,7 +291,7 @@ export default function CreateCharacterPage() {
 
                 <div className="space-y-6">
                     {/* 기본 정보 입력 */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6">
                         <h2 className="text-xl font-semibold mb-4">기본 정보</h2>
                         <div className="space-y-4">
                             <div>
@@ -370,9 +370,9 @@ export default function CreateCharacterPage() {
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                             />
                                             <div className="text-center">
-                                                <FiImage className="mx-auto h-12 w-12 text-blue-500 dark:text-blue-400" />
+                                                <FiImage className="mx-auto h-12 w-12 text-primary" />
                                                 <div className="mt-4 flex text-sm leading-6 text-gray-600 dark:text-gray-400">
-                                                    <span className="relative cursor-pointer rounded-md font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                                    <span className="relative cursor-pointer rounded-md font-semibold text-primary dark:text-primary hover:underline">
                                                         이미지를 선택하거나
                                                     </span>
                                                     <p className="pl-1">드래그하여 업로드하세요</p>
@@ -389,7 +389,10 @@ export default function CreateCharacterPage() {
                     </div>
 
                     {/* 성격 선택 */}
-                    <div id="personalities" className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <div
+                        id="personalities"
+                        className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6"
+                    >
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
                                 성격 <span className="text-red-500">*</span>
@@ -399,7 +402,7 @@ export default function CreateCharacterPage() {
                                     setTempSelectedPersonalities(defaultWatch("personalities"));
                                     setPersonalityModalOpen(true);
                                 }}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                className="px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
                             >
                                 선택하기
                             </button>
@@ -434,7 +437,7 @@ export default function CreateCharacterPage() {
                                     setTempSelectedExperiences(defaultWatch("experiences"));
                                     setExperienceModalOpen(true);
                                 }}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                className="px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
                             >
                                 선택하기
                             </button>
@@ -459,14 +462,17 @@ export default function CreateCharacterPage() {
                     </div>
 
                     {/* 포지션 입력 */}
-                    <div id="positions" className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <div
+                        id="positions"
+                        className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6"
+                    >
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
                                 포지션 <span className="text-red-500">*</span>
                             </h2>
                             <button
                                 onClick={() => appendPositions({ id: Date.now().toString(), keyword: "" })}
-                                className="text-blue-600 hover:text-blue-700 transition-colors"
+                                className="text-primary transition-colors"
                             >
                                 <FiPlus className="h-5 w-5" />
                             </button>
@@ -506,14 +512,17 @@ export default function CreateCharacterPage() {
                     </div>
 
                     {/* 스킬 입력 */}
-                    <div id="skills" className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <div
+                        id="skills"
+                        className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6"
+                    >
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
                                 스킬 <span className="text-red-500">*</span>
                             </h2>
                             <button
                                 onClick={() => appendSkills({ id: Date.now().toString(), keyword: "" })}
-                                className="text-blue-600 hover:text-blue-700 transition-colors"
+                                className="text-primary transition-colors"
                             >
                                 <FiPlus className="h-5 w-5" />
                             </button>
@@ -564,7 +573,7 @@ export default function CreateCharacterPage() {
                         </button>
                         <button
                             onClick={handleSubmit}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                            className="px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
                         >
                             생성
                         </button>
