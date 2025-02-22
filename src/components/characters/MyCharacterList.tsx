@@ -30,7 +30,7 @@ export default function MyCharacterList({ initialData }: MyCharacterListProps) {
                 </div>
                 <button
                     onClick={handleCreateClick}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
                 >
                     <FiPlus className="h-5 w-5" />새 캐릭터 생성
                 </button>
@@ -38,7 +38,10 @@ export default function MyCharacterList({ initialData }: MyCharacterListProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {initialData.data.map((character) => (
-                    <div key={character.id} className="bg-surface rounded-lg shadow-md p-6">
+                    <div
+                        key={character.id}
+                        className="border border-solid border-gray-300 dark:border-gray-700 rounded-lg bg-surface p-6"
+                    >
                         <div className="flex items-center justify-center w-full h-40 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4">
                             {character.image ? (
                                 <img
@@ -61,7 +64,7 @@ export default function MyCharacterList({ initialData }: MyCharacterListProps) {
                         <div className="flex justify-end">
                             <button
                                 onClick={() => router.push(`/characters/${character.id}`)}
-                                className="px-4 py-2 text-blue-600 hover:text-blue-700 transition-colors"
+                                className="px-4 py-2 text-primary transition-colors"
                             >
                                 수정
                             </button>
