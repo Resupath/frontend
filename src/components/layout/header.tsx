@@ -1,7 +1,14 @@
 "use client";
 
 import { useThemeStore } from "@/src/providers/themeStoreProvider";
+import { useAuthStore } from "@/src/stores/useAuthStore";
+import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
+import { useRoomStore } from "@/src/stores/useRoomStore";
+import { useRouter } from "next/navigation";
 import React, { FC, useEffect } from "react";
+import { FaUserCircle } from "react-icons/fa";
+import { Menu, Transition } from "@headlessui/react";
+import { Fragment } from "react";
 
 /**
  * @author bkdragon
@@ -10,6 +17,13 @@ import React, { FC, useEffect } from "react";
 
 const Header: FC = () => {
     const { theme, toggleTheme } = useThemeStore((state) => state);
+    const router = useRouter();
+
+    const { setIsOpen } = useLoginModalStore();
+    const { checkLogin, clearAuth } = useAuthStore((state) => state);
+    const { asyncListRooms } = useRoomStore((state) => state);
+
+    const isLogin = checkLogin();
 
     useEffect(() => {
         document.documentElement.classList.toggle("dark", theme === "dark");
@@ -17,8 +31,65 @@ const Header: FC = () => {
     }, [theme]);
 
     return (
-        <header className="w-full bg-white dark:bg-background text-black dark:text-white border-b border-solid border-gray-200 dark:border-gray-800">
-            <div className="flex flex-row-reverse items-center gap-2 px-4 py-4 w-full">
+        <header className="w-full bg-background text-text border-b border-solid border-gray-300 dark:border-gray-600">
+            <div className="flex flex-row-reverse items-center gap-4 px-8 py-4 w-full">
+                {isLogin && (
+                    <Menu as="div" className="relative">
+                        <Menu.Button className="flex items-center hover:opacity-80 transition-opacity">
+                            <FaUserCircle className="text-4xl" />
+                        </Menu.Button>
+                        <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                        >
+                            <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                <div className="px-1 py-1">
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <button
+                                                onClick={() => router.push("/mypage")}
+                                                className={`${
+                                                    active ? "bg-gray-100 dark:bg-gray-700" : ""
+                                                } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                            >
+                                                마이페이지
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <button
+                                                onClick={async () => {
+                                                    clearAuth();
+                                                    await asyncListRooms();
+                                                    router.push("/");
+                                                }}
+                                                className={`${
+                                                    active ? "bg-gray-100 dark:bg-gray-700" : ""
+                                                } group flex w-full items-center rounded-md px-2 py-2 text-sm text-red-600 dark:text-red-400`}
+                                            >
+                                                로그아웃
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                </div>
+                            </Menu.Items>
+                        </Transition>
+                    </Menu>
+                )}
+                {!isLogin && (
+                    <button
+                        onClick={() => setIsOpen(true)}
+                        className="p-2 transition-colors rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+                    >
+                        로그인
+                    </button>
+                )}
                 <button
                     onClick={toggleTheme}
                     className="p-2 transition-colors rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"

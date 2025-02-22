@@ -1,12 +1,9 @@
 "use client";
 
 import React, { FC, useState, useEffect } from "react";
-import { FaUserCircle } from "react-icons/fa";
 import { FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
-import { useAuthStore } from "@/src/stores/useAuthStore";
 import { pipe } from "fp-ts/lib/function";
 import { useRouter } from "next/navigation";
-import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
 import { RoomItem } from "../room/RoomItem";
 import { useRoomStore } from "@/src/stores/useRoomStore";
 import * as E from "fp-ts/Either";
@@ -51,11 +48,7 @@ function groupRoomsByDate(rooms: RoomWithCharacter[]): DateGroup {
 
 export const Sidebar: FC<{}> = ({}) => {
     const router = useRouter();
-    const { setIsOpen } = useLoginModalStore();
-    const { checkLogin, clearAuth } = useAuthStore((state) => state);
     const { rooms, asyncListRooms } = useRoomStore((state) => state);
-
-    const isLogin = checkLogin();
 
     const [width, setWidth] = useState(300);
 
@@ -166,42 +159,6 @@ export const Sidebar: FC<{}> = ({}) => {
                             </div>
                         </div>
                     )}
-                </div>
-
-                <div className="w-full flex flex-row flex-1">
-                    <div className="flex-1 p-4 h-full flex flex-col">
-                        <div className="mt-auto w-full flex flex-col justify-center items-center gap-2">
-                            {isLogin && (
-                                <>
-                                    <button
-                                        onClick={() => router.push("/mypage")}
-                                        className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity"
-                                    >
-                                        <FaUserCircle className="text-4xl" />
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            clearAuth();
-                                            await asyncListRooms();
-                                            router.push("/");
-                                        }}
-                                        className="text-sm"
-                                    >
-                                        로그아웃
-                                    </button>
-                                </>
-                            )}
-                            {!isLogin && (
-                                <button onClick={() => setIsOpen(true)} className="text-sm">
-                                    로그인
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    {/* <div
-                        onMouseDown={handleResize}
-                        className="w-1 cursor-ew-resize h-full bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700"
-                    ></div> */}
                 </div>
             </aside>
         </>
