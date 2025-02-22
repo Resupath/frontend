@@ -17,7 +17,7 @@ export default function CharacterCard({ character, onClick }: CharacterCardProps
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-4 h-full">
                     <div className="flex flex-wrap gap-1">
                         {character.personalities?.map((personality, index) => (
-                            <span key={index} className="px-2 py-1 text-xs bg-blue-600/80 text-white rounded-md">
+                            <span key={index} className="px-2 py-1 text-xs bg-primary text-on-primary rounded-md">
                                 {personality.keyword}
                             </span>
                         ))}
