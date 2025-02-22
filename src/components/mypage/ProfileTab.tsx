@@ -49,7 +49,7 @@ export default function ProfileTab({ initialData }: ProfileTabProps) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-surface rounded-lg shadow-md p-6 mb-8">
+            <div className="border border-solid border-gray-300 dark:border-gray-700 rounded-lg  p-6 mb-8">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h2 className="text-2xl font-semibold mb-2">{info?.name}</h2>
@@ -76,7 +76,7 @@ export default function ProfileTab({ initialData }: ProfileTabProps) {
                 </div>
             </div>
 
-            <div className="bg-surface rounded-lg shadow-md p-6">
+            <div className="border border-solid border-gray-300 dark:border-gray-700 rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4">설정</h3>
                 <div className="space-y-4">
                     <button onClick={() => router.push("/characters")} className="w-full btn-primary">
@@ -87,13 +87,13 @@ export default function ProfileTab({ initialData }: ProfileTabProps) {
                     </button>
                     <button
                         onClick={ready}
-                        className="w-full py-2 px-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg transition-colors"
+                        className="w-full py-2 px-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg transition-colors"
                     >
                         비밀번호 변경
                     </button>
                     <button
                         onClick={ready}
-                        className="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                        className="w-full py-2 px-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-red-500 dark:text-red-700 rounded-lg transition-colors"
                     >
                         회원 탈퇴
                     </button>

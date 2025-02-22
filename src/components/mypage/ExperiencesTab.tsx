@@ -244,7 +244,7 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="border border-solid border-gray-300 dark:border-gray-700 rounded-lg  p-6">
                 <h3 className="text-xl font-semibold mb-4">경력 추가</h3>
                 <div className="space-y-6">
                     {newExperiences.map((experience, index) => (
@@ -345,13 +345,13 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
                     <div className="flex gap-4">
                         <button
                             onClick={addNewExperience}
-                            className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 text-primary transition-colors"
                         >
                             <FiPlus className="h-5 w-5" />새 경력 추가
                         </button>
                         <button
                             onClick={handleSubmit}
-                            className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 py-2 px-4 bg-primary  text-on-primary rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             저장
                         </button>
@@ -359,7 +359,7 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="border border-solid border-gray-300 dark:border-gray-700 rounded-lg  p-6">
                 <h3 className="text-xl font-semibold mb-4">나의 경력</h3>
                 <div className="space-y-4">
                     {experiences.length === 0 ? (
@@ -473,7 +473,7 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
                                                 onClick={() => {
                                                     handleSelectExperience(experience);
                                                 }}
-                                                className="text-blue-500 hover:text-blue-600 transition-colors"
+                                                className="text-primary transition-colors"
                                             >
                                                 <FiEdit className="h-5 w-5" />
                                             </button>
