@@ -13,8 +13,12 @@ import { useRoomStore } from "@/src/stores/useRoomStore";
 
 import * as TE from "fp-ts/TaskEither";
 import * as O from "fp-ts/Option";
+import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
+import { useAuthStore } from "@/src/stores/useAuthStore";
 
 export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = ({ initialCharacters }) => {
+    const { setIsOpen } = useLoginModalStore();
+    const { checkLogin } = useAuthStore((state) => state);
     const router = useRouter();
     const { asyncListRooms: refreshRooms } = useRoomStore((state) => state);
     const [characters, setCharacters] = useState<Pagination<Character>>(initialCharacters);
@@ -125,7 +129,18 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                         }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 overflow-y-auto"
                     >
-                        <div className="flex items-center justify-center h-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:border-gray-400 dark:hover:border-gray-600 transition-colors">
+                        <div
+                            role="button"
+                            onClick={() => {
+                                if (!checkLogin()) {
+                                    setIsOpen(true);
+                                    return;
+                                } else {
+                                    router.push("/characters/create");
+                                }
+                            }}
+                            className="flex items-center justify-center h-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+                        >
                             <div className="flex flex-col items-center p-6">
                                 <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2">
                                     <svg
