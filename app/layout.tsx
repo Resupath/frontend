@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Resupath",
-    description: "Resupath",
+    title: "면시",
+    description: "면시",
 };
 
 export default async function RootLayout({
@@ -26,7 +26,7 @@ export default async function RootLayout({
     children: React.ReactNode;
 }>) {
     const cookieStore = await cookies();
-    const theme = (cookieStore.get("theme")?.value as "dark" | "light") || "dark";
+    const theme = (cookieStore.get("theme")?.value as "dark" | "light") || "light";
 
     return (
         <html lang="ko" className={theme}>
