@@ -1,6 +1,7 @@
 "use client";
 
 import React, { FC, useEffect, useState } from "react";
+import { useDebounce } from "@/src/hooks/useDebounce";
 import { Character, listCharacters, retrieveCharacter } from "@/src/types/character";
 import { pipe } from "fp-ts/lib/function";
 import { FiChevronsRight, FiSearch, FiUser } from "react-icons/fi";
@@ -27,6 +28,7 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
 
     const [sidebarWidth, setSidebarWidth] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
+    const debouncedSearchQuery = useDebounce(searchQuery, 500);
     const [currentPage, setCurrentPage] = useState(1);
 
     const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -48,9 +50,9 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
         document.addEventListener("mouseup", handleMouseUp);
     };
 
-    const asyncListCharacters = async (page: number = 1) =>
+    const asyncListCharacters = async (page: number = 1, sort: "latest" | "roomCount" = "latest", search?: string) =>
         pipe(
-            listCharacters(page),
+            listCharacters(page, sort, search),
             TE.map((characters) => {
                 setCharacters(characters);
                 setCurrentPage(page);
@@ -84,17 +86,13 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
         )();
 
     useEffect(() => {
-        asyncListCharacters(currentPage);
-    }, [currentPage]);
-
-    const filteredCharacters = characters.data.filter((character: Character) =>
-        character.nickname.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+        asyncListCharacters(currentPage, "latest", debouncedSearchQuery);
+    }, [currentPage, debouncedSearchQuery]);
 
     // 검색어가 변경될 때마다 첫 페이지로 돌아가기
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery]);
+    }, [debouncedSearchQuery]);
 
     return (
         <div className="flex w-full h-full">
@@ -202,7 +200,7 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                 <span className="text-sm text-gray-500 dark:text-gray-400">새 캐릭터 추가</span>
                             </div>
                         </div>
-                        {filteredCharacters.map((character: Character) => (
+                        {characters.data.map((character: Character) => (
                             <CharacterCard key={character.id} character={character} onClick={handleCharacterClick} />
                         ))}
                     </div>
