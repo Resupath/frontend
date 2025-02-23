@@ -44,10 +44,16 @@ const createCharacter = (request: CharacterCreateRequest): TE.TaskEither<Error, 
         (error) => new Error("Failed to create character")
     );
 
-const listCharacters = (page?: number): TE.TaskEither<Error, Pagination<Character>> =>
+const listCharacters = (
+    page?: number,
+    sort: "latest" | "roomCount" = "latest",
+    search?: string
+): TE.TaskEither<Error, Pagination<Character>> =>
     TE.tryCatch(
         async () => {
-            const response = await api.get<Pagination<Character>>("/characters", { params: { page } });
+            const response = await api.get<Pagination<Character>>("/characters", {
+                params: { page: page || 1, sort, search: search || null },
+            });
             return response.data;
         },
         (error) => new Error("Failed to fetch characters")
