@@ -21,16 +21,29 @@ export type AuthStore = {
 
 const initialState: AuthState = {};
 
+const setCookie = (name: string, value: string) => {
+    document.cookie = `${name}=${value}; path=/; max-age=86400; SameSite=Strict`;
+};
+
+const clearCookie = (name: string) => {
+    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
+};
+
 export const useAuthStore = create(
     persist<AuthStore>(
         (set, get) => ({
             user: initialState,
             setAuth: (auth) => {
-                document.cookie = `auth=${auth.accessToken}; path=/; max-age=86400; SameSite=Strict`;
+                if (auth.accessToken) {
+                    setCookie("auth", auth.accessToken);
+                }
+                if (auth.userToken) {
+                    setCookie("userToken", auth.userToken);
+                }
                 set({ user: { ...get().user, ...auth } });
             },
             clearAuth: () => {
-                document.cookie = "auth=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+                clearCookie("auth");
                 set({
                     user: {
                         userToken: get().user.userToken,
