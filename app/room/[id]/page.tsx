@@ -1,7 +1,7 @@
 import { RoomWithCharacter } from "@/src/types/room";
 import { Chat } from "@/src/types/chat";
 import { Suspense } from "react";
-import { ChatRoomClient } from "./ChatRoomClient";
+import { ChatRoomClient } from "../../../src/components/chat/ChatRoomClient";
 import { cookies } from "next/headers";
 import { api } from "@/src/utils/api";
 
@@ -35,7 +35,11 @@ async function getChatsInServerSide(roomId: string, auth: string, userToken: str
     }
 }
 
-export default async function ChatRoom({ params }: { params: { id: string } }) {
+type tParams = Promise<{ id: string }>;
+
+export default async function ChatRoom(props: { params: tParams }) {
+    const params = await props.params;
+
     const roomId = params.id;
     const cookieStore = await cookies();
     const auth = cookieStore.get("auth");
@@ -48,7 +52,7 @@ export default async function ChatRoom({ params }: { params: { id: string } }) {
         ]);
 
         return (
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<div className="w-full h-full flex justify-center items-center">Loading...</div>}>
                 <ChatRoomClient roomId={roomId} roomInfo={roomInfo} initialChats={initialChats} />
             </Suspense>
         );
