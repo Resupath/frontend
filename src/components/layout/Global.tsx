@@ -12,6 +12,7 @@ import { FaGoogle, FaGithub, FaLinkedin } from "react-icons/fa";
 import * as TE from "fp-ts/TaskEither";
 import AlertModal from "../modal/AlertModal";
 import { useAlertStore } from "@/src/stores/useAlertStore";
+import useLoadingStore from "@/src/stores/useLoadingStore";
 
 /**
  * @author bkdragon
@@ -22,6 +23,7 @@ export const Global: FC<{}> = () => {
     const { setAuth, user } = useAuthStore();
     const { isOpen, setIsOpen } = useLoginModalStore();
     const { addAlert } = useAlertStore();
+    const { isLoading } = useLoadingStore();
 
     const getUserToken = () =>
         pipe(
@@ -114,6 +116,12 @@ export const Global: FC<{}> = () => {
                 </Modal.Body>
             </Modal>
             <AlertModal />
+
+            {isLoading && (
+                <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-[1000]">
+                    <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+                </div>
+            )}
         </>
     );
 };
