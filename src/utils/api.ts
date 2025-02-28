@@ -1,6 +1,13 @@
 import axios from "axios";
 
 import { useAuthStore } from "@/src/stores/useAuthStore";
+import useLoadingStore from "../stores/useLoadingStore";
+
+declare module "axios" {
+    interface AxiosRequestConfig {
+        showLoading?: boolean;
+    }
+}
 
 export const api = axios.create({
     baseURL:
@@ -24,6 +31,13 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+    const { showLoading } = config;
+    const { setIsLoading } = useLoadingStore.getState();
+
+    if (showLoading) {
+        setIsLoading(true);
+    }
+
     const { user } = useAuthStore.getState();
 
     // path가 없는 경우 URL에서 추출
@@ -45,5 +59,7 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use((response) => {
+    const { setIsLoading } = useLoadingStore.getState();
+    setIsLoading(false);
     return response;
 });
