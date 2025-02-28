@@ -18,6 +18,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
     title: "면시",
     description: "면시",
+    icons: {
+        icon: {
+            url: "/favicon-16x16.png",
+        },
+    },
 };
 
 export default async function RootLayout({
