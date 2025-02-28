@@ -25,6 +25,15 @@ const createExperience = (request: ExperienceCreateRequest[]): TE.TaskEither<Err
         (error) => new Error("Failed to create experience")
     );
 
+const createExperienceInCharacter = (request: ExperienceCreateRequest[]): TE.TaskEither<Error, Experience[]> =>
+    TE.tryCatch(
+        async () => {
+            const response = await api.post<Experience[]>("/experiences", { experiences: request });
+            return response.data;
+        },
+        (error) => new Error("Failed to create experience")
+    );
+
 const listExperiences = (): TE.TaskEither<Error, Experience[]> =>
     TE.tryCatch(
         async () => {
@@ -43,4 +52,4 @@ const updateExperience = (request: ExperienceUpdateRequest): TE.TaskEither<Error
     );
 
 export type { Experience, ExperienceCreateRequest, ExperienceUpdateRequest };
-export { createExperience, listExperiences, updateExperience };
+export { createExperience, listExperiences, updateExperience, createExperienceInCharacter };

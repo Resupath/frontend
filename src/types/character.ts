@@ -39,7 +39,7 @@ interface CharacterCreateRequest {
 const createCharacter = (request: CharacterCreateRequest): TE.TaskEither<Error, void> =>
     TE.tryCatch(
         async () => {
-            await api.post<void>("/characters", request);
+            await api.post<void>("/characters", request, { showLoading: true });
         },
         (error) => new Error("Failed to create character")
     );
