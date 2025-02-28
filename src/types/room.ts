@@ -21,7 +21,7 @@ interface RoomWithCharacter extends Room {
 
 const createRoom = (characterId: Character["id"]) =>
     TE.tryCatch(
-        () => api.post<{ id: Room["id"] }>(`/rooms`, { characterId }),
+        () => api.post<{ id: Room["id"] }>(`/rooms`, { characterId }, { showLoading: true }),
         (error) => new Error("Failed to create room")
     );
 
@@ -37,6 +37,12 @@ const listRooms = () =>
         (error) => new Error("Failed to fetch rooms")
     );
 
-export { createRoom, getRoom, listRooms };
+const deleteRoom = (roomId: Room["id"]) =>
+    TE.tryCatch(
+        () => api.delete(`/rooms/${roomId}`),
+        (error) => new Error("Failed to delete room")
+    );
+
+export { createRoom, getRoom, listRooms, deleteRoom };
 
 export type { Room, RoomWithCharacter };
