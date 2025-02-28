@@ -111,9 +111,9 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="캐릭터 검색..."
-                                className="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                                         bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none"
+                                placeholder="이름/직군/기술명"
+                                className="block w-full h-[40px] pl-10 pr-10 py-2 border rounded-2xl
+                                         bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none text-sm"
                             />
                             {searchQuery && (
                                 <button
