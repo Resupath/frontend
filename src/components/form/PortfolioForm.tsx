@@ -24,7 +24,7 @@ export const PortfolioForm: FC<PortfolioFormProps> = ({ register, control, error
     const portfolios = useWatch({ control, name: "portfolios" });
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6">
+        <div className="p-6">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">포트폴리오</h2>
                 <button

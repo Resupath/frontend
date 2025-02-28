@@ -2,11 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiImage } from "react-icons/fi";
+import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiImage, FiAlertCircle } from "react-icons/fi";
 import { pipe } from "fp-ts/function";
 import * as TE from "fp-ts/TaskEither";
 import { listPersonalitiesAll, Personality } from "@/src/types/personality";
-import { Experience } from "@/src/types/experience";
+import {
+    createExperience,
+    createExperienceInCharacter,
+    Experience,
+    ExperienceCreateRequest,
+} from "@/src/types/experience";
 import { listExperiences } from "@/src/types/experience";
 import { Listbox } from "@headlessui/react";
 import SelectionModal from "@/src/components/modal/SelectionModal";
@@ -19,6 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ResumeForm } from "@/src/components/form/ResumeForm";
 import { PortfolioForm } from "@/src/components/form/PortfolioForm";
 import { CharacterCreateRequest, createCharacter } from "@/src/types/character";
+import { useAuthStore } from "@/src/stores/useAuthStore";
 
 interface InputField {
     id: string;
@@ -73,12 +79,11 @@ export type SourceArrayForm = z.infer<typeof SourceArrayFormSchema>;
 export type SourceArrayRequiredForm = z.infer<typeof SourceArrayRequiredFormSchema>;
 
 export default function CreateCharacterPage() {
+    const { user } = useAuthStore();
     const router = useRouter();
     const { addAlert } = useAlertStore();
     const [personalities, setPersonalities] = useState<Personality[]>([]);
     const [experiences, setExperiences] = useState<Experience[]>([]);
-
-    console.log(experiences, "experiences");
 
     const {
         register: defaultRegister,
@@ -100,8 +105,6 @@ export default function CreateCharacterPage() {
             skills: [{ id: Date.now().toString(), keyword: "" }],
         },
     });
-
-    console.log(defaultErrors, "defaultErrors");
 
     const { append: appendPositions, remove: removePositions } = useFieldArray({
         control: defaultControl,
@@ -276,6 +279,51 @@ export default function CreateCharacterPage() {
         }
     };
 
+    const [newExperiences, setNewExperiences] = useState<Omit<ExperienceCreateRequest, "sequence">>({
+        companyName: "",
+        position: "",
+        startDate: "",
+        endDate: "",
+    });
+
+    const [showNewExperienceForm, setShowNewExperienceForm] = useState(false);
+
+    const handleShowNewExperienceForm = () => {
+        if (showNewExperienceForm) {
+            setNewExperiences({
+                companyName: "",
+                position: "",
+                startDate: "",
+                endDate: "",
+            });
+        }
+        setShowNewExperienceForm(!showNewExperienceForm);
+    };
+
+    const addNewExperience = (request: Omit<ExperienceCreateRequest, "sequence">) => {
+        if (!(request.companyName && request.position && request.startDate && request.endDate)) return;
+
+        pipe(
+            createExperienceInCharacter([{ ...request, sequence: experiences.length }]),
+            TE.map((response) => {
+                setExperiences([...experiences, ...response]);
+                defaultSetValue("experiences", [...defaultWatch("experiences"), ...response], {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                    shouldTouch: true,
+                });
+            }),
+            TE.mapLeft((error) => console.error(error))
+        )();
+
+        setNewExperiences({
+            companyName: "",
+            position: "",
+            startDate: "",
+            endDate: "",
+        });
+        setShowNewExperienceForm(false);
+    };
     return (
         <main className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
@@ -286,69 +334,28 @@ export default function CreateCharacterPage() {
                     >
                         <FiArrowLeft className="h-6 w-6" />
                     </button>
-                    <h1 className="text-3xl font-bold">새 캐릭터 생성</h1>
+                    <h1 className="text-3xl font-bold">캐릭터 생성</h1>
                 </div>
 
                 <div className="space-y-6">
                     {/* 기본 정보 입력 */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6">
-                        <h2 className="text-xl font-semibold mb-4">기본 정보</h2>
-                        <div className="space-y-4">
+                    <div className="p-6 flex justify-between gap-[67px]">
+                        <div className="w-fit">
                             <div>
-                                <label htmlFor="nickname" className="block text-sm font-medium mb-1">
-                                    닉네임 <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    id="nickname"
-                                    type="text"
-                                    {...defaultRegister("nickname")}
-                                    placeholder="닉네임을 입력하세요"
-                                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700`}
-                                />
-                                {defaultErrors.nickname && (
-                                    <p className="mt-2 text-sm text-red-500">{defaultErrors.nickname.message}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">공개 여부</label>
-                                <div className="flex items-center gap-4">
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            checked={defaultWatch("isPublic")}
-                                            onChange={() => defaultSetValue("isPublic", true)}
-                                            className="h-4 w-4 text-blue-600"
-                                        />
-                                        <span>공개</span>
-                                    </label>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            checked={!defaultWatch("isPublic")}
-                                            onChange={() => defaultSetValue("isPublic", false)}
-                                            className="h-4 w-4 text-blue-600"
-                                        />
-                                        <span>비공개</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="image" className="block text-sm font-medium mb-1">
-                                    이미지
-                                </label>
                                 <div
-                                    className={`relative mt-2 ${
-                                        image ? "h-64" : "h-48"
-                                    } rounded-lg border-2 border-dashed transition-colors duration-200 flex flex-col items-center justify-center overflow-hidden dark:bg-gray-700
-                                    `}
+                                    className={`relative mt-2 w-[192px] h-[192px] aspect-square rounded-full border-2 border-dashed transition-colors duration-200 flex flex-col items-center justify-center overflow-hidden dark:bg-gray-700`}
                                     onDragOver={handleDragOver}
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
                                 >
                                     {image ? (
                                         <div className="relative w-full h-full group">
-                                            <img src={image} alt="Preview" className="w-full h-full object-contain" />
-                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                            <img
+                                                src={image}
+                                                alt="Preview"
+                                                className="w-full h-full object-cover rounded-full"
+                                            />
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-full">
                                                 <button
                                                     onClick={() => setImage(null)}
                                                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -371,18 +378,49 @@ export default function CreateCharacterPage() {
                                             />
                                             <div className="text-center">
                                                 <FiImage className="mx-auto h-12 w-12 text-primary" />
-                                                <div className="mt-4 flex text-sm leading-6 text-gray-600 dark:text-gray-400">
-                                                    <span className="relative cursor-pointer rounded-md font-semibold text-primary dark:text-primary hover:underline">
-                                                        이미지를 선택하거나
-                                                    </span>
-                                                    <p className="pl-1">드래그하여 업로드하세요</p>
-                                                </div>
-                                                <p className="text-xs leading-5 text-gray-600 dark:text-gray-400">
-                                                    PNG, JPG, GIF up to 10MB
-                                                </p>
                                             </div>
                                         </>
                                     )}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col justify-around flex-1">
+                            <div>
+                                <label htmlFor="nickname" className="block text-lg font-semibold mb-1">
+                                    닉네임 <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="nickname"
+                                    type="text"
+                                    {...defaultRegister("nickname")}
+                                    placeholder="닉네임을 입력하세요"
+                                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
+                                />
+                                {defaultErrors.nickname && (
+                                    <p className="mt-2 text-sm text-red-500">{defaultErrors.nickname.message}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="block text-lg font-semibold mb-1">공개 여부</label>
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            checked={defaultWatch("isPublic")}
+                                            onChange={() => defaultSetValue("isPublic", true)}
+                                            className="h-4 w-4 text-blue-600"
+                                        />
+                                        <span>공개</span>
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            checked={!defaultWatch("isPublic")}
+                                            onChange={() => defaultSetValue("isPublic", false)}
+                                            className="h-4 w-4 text-blue-600"
+                                        />
+                                        <span>비공개</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -391,66 +429,179 @@ export default function CreateCharacterPage() {
                     {/* 성격 선택 */}
                     <div
                         id="personalities"
-                        className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6"
+                        className="relative overflow-hidden rounded-[32px] border border-[#E5E7EB] dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => {
+                            setTempSelectedPersonalities(defaultWatch("personalities"));
+                            setPersonalityModalOpen(true);
+                        }}
                     >
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">
-                                성격 <span className="text-red-500">*</span>
-                            </h2>
-                            <button
-                                onClick={() => {
-                                    setTempSelectedPersonalities(defaultWatch("personalities"));
-                                    setPersonalityModalOpen(true);
-                                }}
-                                className="px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
-                            >
-                                선택하기
-                            </button>
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-full bg-[#FFE7BA] dark:bg-amber-900/30 flex items-center justify-center">
+                                <span className="text-2xl">😊</span>
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                        {user?.name}님의 캐릭터 성격
+                                    </h2>
+                                    <span className="px-2 py-0.5 text-sm rounded-full bg-[#E5F6E8] dark:bg-green-900/30 text-[#2F9B4E] dark:text-green-400">
+                                        필수
+                                    </span>
+                                </div>
+                                <p className="text-primary mt-1">캐릭터 성격 골라보기</p>
+                            </div>
+                            <div className="text-primary">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={2}
+                                    stroke="currentColor"
+                                    className="w-6 h-6"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {defaultWatch("personalities").length === 0 ? (
-                                <p className="text-gray-500">선택된 성격이 없습니다.</p>
-                            ) : (
-                                defaultWatch("personalities").map((personality) => (
+                        {defaultWatch("personalities").length > 0 && (
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                {defaultWatch("personalities").map((personality) => (
                                     <span
                                         key={personality.id}
-                                        className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full"
+                                        className="px-3 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm"
                                     >
                                         {personality.keyword}
                                     </span>
-                                ))
-                            )}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                         {defaultErrors.personalities && (
-                            <p className="mt-2 text-sm text-red-500">{defaultErrors.personalities.message}</p>
+                            <p className="mt-3 text-sm text-red-500 flex items-center gap-1.5">
+                                <FiAlertCircle className="h-4 w-4" />
+                                {defaultErrors.personalities.message}
+                            </p>
                         )}
                     </div>
 
-                    {/* 경험 선택 */}
-                    <div id="experiences" className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    {/* 경력 선택 */}
+                    <div id="experiences" className="rounded-lg p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
-                                경험 <span className="text-red-500">*</span>
+                                경력
+                                <span className="ml-2 font-normal px-2 py-0.5 text-sm rounded-full bg-[#E5F6E8] dark:bg-green-900/30 text-[#2F9B4E] dark:text-green-400">
+                                    필수
+                                </span>
                             </h2>
-                            <button
-                                onClick={() => {
-                                    setTempSelectedExperiences(defaultWatch("experiences"));
-                                    setExperienceModalOpen(true);
-                                }}
-                                className="px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
-                            >
-                                선택하기
-                            </button>
                         </div>
+
+                        {/* 직접 입력 폼 추가 */}
+                        <div className="mb-6">
+                            {showNewExperienceForm && (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                회사명
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={newExperiences.companyName}
+                                                onChange={(e) =>
+                                                    setNewExperiences((prev) => ({
+                                                        ...prev,
+                                                        companyName: e.target.value,
+                                                    }))
+                                                }
+                                                placeholder="회사명을 입력하세요"
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                직책
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={newExperiences.position}
+                                                onChange={(e) =>
+                                                    setNewExperiences((prev) => ({ ...prev, position: e.target.value }))
+                                                }
+                                                placeholder="직책을 입력하세요"
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                시작일
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={newExperiences.startDate}
+                                                onChange={(e) =>
+                                                    setNewExperiences((prev) => ({
+                                                        ...prev,
+                                                        startDate: e.target.value,
+                                                    }))
+                                                }
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                종료일
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={newExperiences.endDate}
+                                                onChange={(e) =>
+                                                    setNewExperiences((prev) => ({ ...prev, endDate: e.target.value }))
+                                                }
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 flex justify-end">
+                                        <button
+                                            onClick={() => addNewExperience(newExperiences)}
+                                            className="px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
+                                        >
+                                            추가
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+
+                            <div className="mt-4 flex gap-4">
+                                <button
+                                    onClick={() => {
+                                        setTempSelectedExperiences(defaultWatch("experiences"));
+                                        setExperienceModalOpen(true);
+                                    }}
+                                    className="px-4 py-2 text-primary  dark:bg-gray-700 border border-solid border-primary rounded-lg transition-colors"
+                                >
+                                    경력 불러오기
+                                </button>
+                                <button
+                                    onClick={handleShowNewExperienceForm}
+                                    className="px-4 py-2 text-gray-400 dark:text-gray-800 border border-solid border-gray-400 dark:border-gray-700 rounded-lg transition-colors"
+                                >
+                                    직접 추가하기
+                                </button>
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             {defaultWatch("experiences").length === 0 ? (
-                                <p className="text-gray-500">선택된 경험이 없습니다.</p>
+                                <p className="text-gray-500">선택된 경력이 없습니다.</p>
                             ) : (
                                 defaultWatch("experiences").map((experience) => (
                                     <div key={experience.id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                         <div className="font-medium">{experience.companyName}</div>
                                         <div className="text-sm text-gray-600 dark:text-gray-400">
                                             {experience.position}
+                                        </div>
+                                        <div className="text-xs text-gray-400 dark:text-gray-400">
+                                            {experience.startDate} ~ {experience.endDate}
                                         </div>
                                     </div>
                                 ))
@@ -462,13 +613,13 @@ export default function CreateCharacterPage() {
                     </div>
 
                     {/* 포지션 입력 */}
-                    <div
-                        id="positions"
-                        className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6"
-                    >
+                    <div id="positions" className="p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
-                                포지션 <span className="text-red-500">*</span>
+                                포지션
+                                <span className="ml-2 font-normal px-2 py-0.5 text-sm rounded-full bg-[#E5F6E8] dark:bg-green-900/30 text-[#2F9B4E] dark:text-green-400">
+                                    필수
+                                </span>
                             </h2>
                             <button
                                 onClick={() => appendPositions({ id: Date.now().toString(), keyword: "" })}
@@ -485,9 +636,7 @@ export default function CreateCharacterPage() {
                                             type="text"
                                             {...defaultRegister(`positions.${index}.keyword`)}
                                             placeholder="포지션을 입력하세요"
-                                            className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700
-                                               
-                                            `}
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
                                         />
                                         {defaultWatch("positions").length > 1 && (
                                             <button
@@ -512,13 +661,13 @@ export default function CreateCharacterPage() {
                     </div>
 
                     {/* 스킬 입력 */}
-                    <div
-                        id="skills"
-                        className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6"
-                    >
+                    <div id="skills" className="p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
-                                스킬 <span className="text-red-500">*</span>
+                                스킬
+                                <span className="ml-2 font-normal px-2 py-0.5 text-sm rounded-full bg-[#E5F6E8] dark:bg-green-900/30 text-[#2F9B4E] dark:text-green-400">
+                                    필수
+                                </span>
                             </h2>
                             <button
                                 onClick={() => appendSkills({ id: Date.now().toString(), keyword: "" })}
@@ -536,7 +685,7 @@ export default function CreateCharacterPage() {
                                             value={skill.keyword}
                                             {...defaultRegister(`skills.${index}.keyword`)}
                                             placeholder="스킬을 입력하세요"
-                                            className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 `}
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
                                         />
                                         {defaultWatch("skills").length > 1 && (
                                             <button
@@ -585,7 +734,7 @@ export default function CreateCharacterPage() {
             <SelectionModal
                 isOpen={personalityModalOpen}
                 onClose={() => setPersonalityModalOpen(false)}
-                title="성격 선택"
+                title="본일을 묘사하기에 적합한 성격 유형을 골라주세요."
                 onConfirm={handlePersonalitiesConfirm}
             >
                 <Listbox value={tempSelectedPersonalities} onChange={handlePersonalitiesChange} multiple>
@@ -597,7 +746,7 @@ export default function CreateCharacterPage() {
                                 className={({ active, selected }) =>
                                     `relative cursor-pointer select-none p-3 rounded-lg ${
                                         selected
-                                            ? "bg-blue-50 dark:bg-blue-900/50 border-2 border-blue-500 dark:border-blue-400"
+                                            ? "border-2 text-primary font-semibold border-primary dark:border-primary"
                                             : active
                                             ? "bg-gray-50 dark:bg-gray-700"
                                             : "border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
@@ -609,11 +758,6 @@ export default function CreateCharacterPage() {
                                         <span className={`block truncate ${selected ? "font-medium" : "font-normal"}`}>
                                             {personality.keyword}
                                         </span>
-                                        {selected && (
-                                            <div className="text-blue-500 dark:text-blue-400 mt-1">
-                                                <FiCheck className="h-4 w-4" />
-                                            </div>
-                                        )}
                                     </div>
                                 )}
                             </Listbox.Option>
@@ -626,7 +770,7 @@ export default function CreateCharacterPage() {
             <SelectionModal
                 isOpen={experienceModalOpen}
                 onClose={() => setExperienceModalOpen(false)}
-                title="경험 선택"
+                title="캐릭터에 추가하고 싶은 경력을 골라주세요."
                 onConfirm={handleExperiencesConfirm}
             >
                 <Listbox
@@ -657,6 +801,9 @@ export default function CreateCharacterPage() {
                                             </div>
                                             <div className="text-sm text-gray-600 dark:text-gray-400">
                                                 {experience.position}
+                                            </div>
+                                            <div className="text-xs text-gray-400 dark:text-gray-400">
+                                                {experience.startDate} ~ {experience.endDate}
                                             </div>
                                         </div>
                                         {selected && (

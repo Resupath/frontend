@@ -24,10 +24,13 @@ export const ResumeForm: FC<ResumeFormProps> = ({ register, control, errors }) =
     const resumes = useWatch({ control, name: "resumes" });
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6">
+        <div className="p-6">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">
-                    이력서 <span className="text-red-500">*</span>
+                    이력서
+                    <span className="ml-2 font-normal px-2 py-0.5 text-sm rounded-full bg-[#E5F6E8] dark:bg-green-900/30 text-[#2F9B4E] dark:text-green-400">
+                        필수
+                    </span>
                 </h2>
                 <button
                     onClick={() =>
@@ -81,7 +84,7 @@ export const ResumeForm: FC<ResumeFormProps> = ({ register, control, errors }) =
                             )}
                         </div>
 
-                        {resumes[index].type === "file" ? (
+                        {resumes[index]?.type === "file" ? (
                             <Controller
                                 control={control}
                                 name={`resumes.${index}.url`}
