@@ -44,6 +44,14 @@ const createCharacter = (request: CharacterCreateRequest): TE.TaskEither<Error, 
         (error) => new Error("Failed to create character")
     );
 
+const updateCharacter = (id: string, request: CharacterCreateRequest): TE.TaskEither<Error, void> =>
+    TE.tryCatch(
+        async () => {
+            await api.patch<void>(`/characters/${id}`, request, { showLoading: true });
+        },
+        (error) => new Error("Failed to update character")
+    );
+
 const listCharacters = (
     page?: number,
     sort: "latest" | "roomCount" = "latest",
@@ -79,4 +87,4 @@ const listMyCharacters = (page?: number): TE.TaskEither<Error, Pagination<Charac
 
 export type { Character, CharacterCreateRequest };
 
-export { listCharacters, createCharacter, listMyCharacters, retrieveCharacter };
+export { listCharacters, createCharacter, listMyCharacters, retrieveCharacter, updateCharacter };
