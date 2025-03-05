@@ -13,6 +13,7 @@ import * as TE from "fp-ts/TaskEither";
 import AlertModal from "../modal/AlertModal";
 import { useAlertStore } from "@/src/stores/useAlertStore";
 import useLoadingStore from "@/src/stores/useLoadingStore";
+import { Logo } from "../logo/Logo";
 
 /**
  * @author bkdragon
@@ -82,7 +83,10 @@ export const Global: FC<{}> = () => {
             <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} rounded={true}>
                 <Modal.Header>
                     <div className="p-6 text-start">
-                        <h1 className="text-3xl font-bold mb-8">면시</h1>
+                        <div className="flex flex-row items-center gap-2 mb-16">
+                            <Logo />
+                            <h1 className="text-3xl font-bold">면시</h1>
+                        </div>
                         <h1 className="text-2xl font-bold">이력서 대신</h1>
                         <h2 className="text-xl font-semibold mt-2">챗봇을 제출하세요!</h2>
                     </div>
@@ -112,6 +116,10 @@ export const Global: FC<{}> = () => {
                             <FaLinkedin className="w-5 h-5" />
                             LinkedIn으로 로그인
                         </button>
+
+                        <div className="flex flex-row-reverse mt-16 mb-8 gap-2">
+                            <span className="text-gray-500 text-sm hover:underline">개인정보처리방침</span>
+                        </div>
                     </div>
                 </Modal.Body>
             </Modal>
