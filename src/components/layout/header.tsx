@@ -20,7 +20,7 @@ const Header: FC = () => {
     const router = useRouter();
 
     const { setIsOpen } = useLoginModalStore();
-    const { checkLogin, clearAuth } = useAuthStore((state) => state);
+    const { checkLogin, clearAuth, user } = useAuthStore((state) => state);
     const { asyncListRooms } = useRoomStore((state) => state);
 
     const isLogin = checkLogin();
@@ -35,8 +35,9 @@ const Header: FC = () => {
             <div className="flex flex-row-reverse items-center gap-4 px-8 py-4 w-full">
                 {isLogin && (
                     <Menu as="div" className="relative">
-                        <Menu.Button className="flex items-center hover:opacity-80 transition-opacity">
+                        <Menu.Button className="flex gap-2 items-center hover:opacity-80 transition-opacity">
                             <FaUserCircle className="text-4xl" />
+                            <span className="text-sm text-gray-500 dark:text-gray-600">{user?.name}님 환영해요!</span>
                         </Menu.Button>
                         <Transition
                             as={Fragment}
@@ -47,7 +48,7 @@ const Header: FC = () => {
                             leaveFrom="transform opacity-100 scale-100"
                             leaveTo="transform opacity-0 scale-95"
                         >
-                            <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <Menu.Items className="z-50 absolute right-0 mt-2 w-48 origin-top-right bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                 <div className="px-1 py-1">
                                     <Menu.Item>
                                         {({ active }) => (
@@ -82,21 +83,21 @@ const Header: FC = () => {
                         </Transition>
                     </Menu>
                 )}
-                {!isLogin && (
-                    <button
-                        onClick={() => setIsOpen(true)}
-                        className="p-2 transition-colors rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-                    >
-                        로그인
-                    </button>
-                )}
                 <button
                     onClick={toggleTheme}
-                    className="p-2 transition-colors rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+                    className="p-2 transition-colors rounded-lg text-primary hover:bg-gray-200 dark:hover:bg-gray-700"
                     aria-label="테마 변경"
                 >
                     {theme === "light" ? <MoonIcon /> : <SunIcon />}
                 </button>
+                {!isLogin && (
+                    <button
+                        onClick={() => setIsOpen(true)}
+                        className="px-8 py-2 transition-colors rounded-lg text-primary border border-primary hover:bg-gray-200 dark:hover:bg-gray-700"
+                    >
+                        로그인
+                    </button>
+                )}
             </div>
         </header>
     );
