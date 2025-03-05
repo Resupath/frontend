@@ -22,7 +22,11 @@ async function getCharacterInfoInServerSide(characterId: string, auth: string, u
     }
 }
 
-export default async function EditCharacterPage({ params }: { params: { id: string } }) {
+type tParams = Promise<{ id: string }>;
+
+export default async function EditCharacterPage(props: { params: tParams }) {
+    const params = await props.params;
+
     const cookieStore = await cookies();
     const auth = cookieStore.get("auth");
     const userToken = cookieStore.get("userToken");
