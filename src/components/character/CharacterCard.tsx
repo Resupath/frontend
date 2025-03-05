@@ -1,13 +1,18 @@
+import { useAuthStore } from "@/src/stores/useAuthStore";
 import { Character } from "@/src/types/character";
-import { FiUser } from "react-icons/fi";
+import { FiUser, FiUserCheck, FiStar } from "react-icons/fi";
 
 interface CharacterCardProps {
     character: Character;
     onClick: (character: Character) => void;
+    isNew?: boolean;
 }
 
-export default function CharacterCard({ character, onClick }: CharacterCardProps) {
+export default function CharacterCard({ character, onClick, isNew = false }: CharacterCardProps) {
     const position = character.positions[0];
+    const { user } = useAuthStore();
+
+    const isOwner = user?.id === character.memberId;
     return (
         <div
             onClick={() => onClick(character)}
@@ -34,7 +39,11 @@ export default function CharacterCard({ character, onClick }: CharacterCardProps
             </div>
 
             <div className="p-4 bg-background text-text h-1/3 flex flex-col justify-center">
-                <h3 className="text-lg font-semibold mb-1">{character.nickname}</h3>
+                <h3 className="text-lg font-semibold mb-1 flex items-center gap-2">
+                    {isNew && <span className="text-primary text-sm">NEW</span>}
+                    {character.nickname}
+                    {isOwner && <FiUserCheck className="text-primary" />}
+                </h3>
                 <div className="flex items-center justify-between text-sm opacity-80">
                     <span>
                         {character.experienceYears}년차 {position.keyword}

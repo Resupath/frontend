@@ -19,7 +19,7 @@ import { useAuthStore } from "@/src/stores/useAuthStore";
 
 export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = ({ initialCharacters }) => {
     const { setIsOpen } = useLoginModalStore();
-    const { checkLogin } = useAuthStore((state) => state);
+    const { checkLogin, user } = useAuthStore((state) => state);
     const router = useRouter();
     const { asyncListRooms: refreshRooms } = useRoomStore((state) => state);
     const [characters, setCharacters] = useState<Pagination<Character>>(initialCharacters);
@@ -131,33 +131,6 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                 </button>
                             )}
                         </div>
-                        {/* 자주 검색되는 키워드 */}
-                        <div className="mt-3">
-                            <div className="flex flex-wrap gap-2">
-                                {[
-                                    // 프론트엔드
-                                    { category: "프론트엔드", keywords: ["React", "TypeScript", "Next.js", "Vue.js"] },
-                                    // 백엔드
-                                    { category: "백엔드", keywords: ["Spring", "Node.js", "Django", "Java"] },
-                                    // 데브옵스
-                                    { category: "데브옵스", keywords: ["Docker", "Kubernetes", "AWS", "CI/CD"] },
-                                ].map((group) => (
-                                    <div key={group.category} className="flex items-center gap-2">
-                                        {group.keywords.map((keyword) => (
-                                            <button
-                                                key={keyword}
-                                                onClick={() => setSearchQuery(keyword)}
-                                                className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 
-                                                         dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 
-                                                         transition-colors"
-                                            >
-                                                {keyword}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
                     </div>
 
                     {/* 캐릭터 그리드 */}
@@ -200,8 +173,13 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                 <span className="text-sm text-gray-500 dark:text-gray-400">새 캐릭터 추가</span>
                             </div>
                         </div>
-                        {characters.data.map((character: Character) => (
-                            <CharacterCard key={character.id} character={character} onClick={handleCharacterClick} />
+                        {characters.data.map((character: Character, index: number) => (
+                            <CharacterCard
+                                key={character.id}
+                                character={character}
+                                onClick={handleCharacterClick}
+                                isNew={index >= characters.data.length - 4}
+                            />
                         ))}
                     </div>
                     <div className="mt-auto">
@@ -269,13 +247,21 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                             </div>
                                         </div>
 
-                                        <div className="w-full mb-4">
+                                        <div className="w-full mb-4 flex gap-2 items-center">
                                             <button
                                                 onClick={() => asyncCreateRoom(character.id)}
                                                 className="w-full px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
                                             >
                                                 면접 진행하기
                                             </button>
+                                            {character.memberId === user?.id && (
+                                                <button
+                                                    onClick={() => router.push(`/characters/${character.id}/edit`)}
+                                                    className="w-full px-4 py-2 text-primary border border-primary rounded-lg transition-colors"
+                                                >
+                                                    수정하기
+                                                </button>
+                                            )}
                                         </div>
 
                                         <div className="space-y-6">
