@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FiPlus, FiArrowLeft, FiUser } from "react-icons/fi";
 import { Character } from "@/src/types/character";
 import { Pagination } from "@/src/types/pagination";
+import CharacterCard from "../character/CharacterCard";
 
 interface MyCharacterListProps {
     initialData: Pagination<Character>;
@@ -37,41 +38,6 @@ export default function MyCharacterList({ initialData }: MyCharacterListProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {initialData.data.map((character) => (
-                    <div
-                        key={character.id}
-                        className="border border-solid border-gray-300 dark:border-gray-700 rounded-lg bg-surface p-6"
-                    >
-                        <div className="flex items-center justify-center w-full h-40 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4">
-                            {character.image ? (
-                                <img
-                                    src={character.image}
-                                    alt={character.nickname}
-                                    className="w-full h-full object-cover rounded-lg"
-                                />
-                            ) : (
-                                <span className="text-6xl">
-                                    <FiUser className="w-20 h-20 text-gray-400 dark:text-gray-500" />
-                                </span>
-                            )}
-                        </div>
-                        <h2 className="text-xl font-semibold mb-2">{character.nickname}</h2>
-                        <p className="text-gray-600 dark:text-gray-400 mb-4">
-                            {character.personalities.length > 0
-                                ? character.personalities.map((p) => p.keyword).join(", ")
-                                : "아직 캐릭터 정보가 없습니다."}
-                        </p>
-                        <div className="flex justify-end">
-                            <button
-                                onClick={() => router.push(`/characters/${character.id}`)}
-                                className="px-4 py-2 text-primary transition-colors"
-                            >
-                                수정
-                            </button>
-                        </div>
-                    </div>
-                ))}
-
                 <div
                     role="button"
                     onClick={handleCreateClick}
@@ -82,6 +48,13 @@ export default function MyCharacterList({ initialData }: MyCharacterListProps) {
                         <span>새 캐릭터 생성</span>
                     </div>
                 </div>
+                {initialData.data.map((character) => (
+                    <CharacterCard
+                        key={character.id}
+                        character={character}
+                        onClick={() => router.push(`/characters/${character.id}/edit`)}
+                    />
+                ))}
             </div>
         </div>
     );
