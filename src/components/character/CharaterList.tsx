@@ -146,8 +146,7 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                             role="button"
                             onClick={() => {
                                 if (!checkLogin()) {
-                                    setIsOpen(true);
-                                    return;
+                                    router.push("/login");
                                 } else {
                                     router.push("/characters/create");
                                 }

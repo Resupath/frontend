@@ -4,7 +4,7 @@ import { useThemeStore } from "@/src/providers/themeStoreProvider";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
 import { useRoomStore } from "@/src/stores/useRoomStore";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import React, { FC, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { Menu, Transition } from "@headlessui/react";
@@ -16,6 +16,7 @@ import { Fragment } from "react";
  **/
 
 const Header: FC = () => {
+    const pathname = usePathname();
     const { theme, toggleTheme } = useThemeStore((state) => state);
     const router = useRouter();
 
@@ -29,6 +30,10 @@ const Header: FC = () => {
         document.documentElement.classList.toggle("dark", theme === "dark");
         document.cookie = `theme=${theme}; path=/; max-age=31536000; SameSite=Strict`;
     }, [theme]);
+
+    if (pathname === "/login") {
+        return null;
+    }
 
     return (
         <header className="w-full bg-background text-text border-b border-solid border-gray-300 dark:border-gray-600">
