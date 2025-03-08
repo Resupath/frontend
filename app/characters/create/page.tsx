@@ -284,6 +284,7 @@ export default function CreateCharacterPage() {
         position: "",
         startDate: "",
         endDate: "",
+        description: "",
     });
 
     const [showNewExperienceForm, setShowNewExperienceForm] = useState(false);
@@ -295,6 +296,7 @@ export default function CreateCharacterPage() {
                 position: "",
                 startDate: "",
                 endDate: "",
+                description: "",
             });
         }
         setShowNewExperienceForm(!showNewExperienceForm);
@@ -321,6 +323,7 @@ export default function CreateCharacterPage() {
             position: "",
             startDate: "",
             endDate: "",
+            description: "",
         });
         setShowNewExperienceForm(false);
     };

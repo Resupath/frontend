@@ -1,28 +1,9 @@
-import ExperiencesTab from "@/src/components/mypage/ExperiencesTab";
 import { MyPageNavigate } from "@/src/components/mypage/MyPageNavigate";
-import { api } from "@/src/utils/api";
-import { cookies } from "next/headers";
+import { Suspense } from "react";
+import { ProfileSkeleton } from "../page";
+import { ExperienceContainer } from "@/src/components/mypage/ExperienceContainer";
 
-export default async function MyPage() {
-    const cookieStore = await cookies();
-    const auth = cookieStore.get("auth");
-
-    const getExperiencesInServerSide = async () => {
-        try {
-            const experiences = await api.get("/experiences", {
-                headers: {
-                    "X-Member": `Bearer ${auth?.value}`,
-                },
-            });
-            return experiences.data;
-        } catch (error) {
-            console.error(error);
-            return [];
-        }
-    };
-
-    const experiences = await getExperiencesInServerSide();
-
+export default function MyPage() {
     return (
         <main className="w-full h-full overflow-y-auto">
             <div className="container mx-auto px-4 py-8">
@@ -32,7 +13,9 @@ export default async function MyPage() {
                     <div>
                         <MyPageNavigate />
                         <div className="rounded-xl">
-                            <ExperiencesTab initialData={experiences} />
+                            <Suspense fallback={<ProfileSkeleton />}>
+                                <ExperienceContainer />
+                            </Suspense>
                         </div>
                     </div>
                 </div>

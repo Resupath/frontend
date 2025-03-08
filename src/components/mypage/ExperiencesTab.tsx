@@ -8,6 +8,7 @@ import {
     listExperiences,
     ExperienceCreateRequest,
     updateExperience,
+    deleteExperience,
 } from "@/src/types/experience";
 import { FiPlus, FiTrash2, FiEdit } from "react-icons/fi";
 import * as TE from "fp-ts/TaskEither";
@@ -26,17 +27,19 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
             position: "",
             startDate: "",
             endDate: "",
+            description: "",
         },
     ]);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const validateField = (value: string, fieldName: string): string => {
+        if (fieldName === "종료일") return "";
         if (!value.trim()) return `${fieldName}을(를) 입력해주세요`;
         return "";
     };
 
     const validateDates = (startDate: string, endDate: string): string => {
-        if (!startDate || !endDate) return ""; // 빈 값은 개별 필드 검증에서 처리
+        if (!startDate || !endDate) return "";
         return new Date(startDate) <= new Date(endDate) ? "" : "시작일은 종료일보다 빨라야 합니다";
     };
 
@@ -92,6 +95,7 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
                 position: "",
                 startDate: "",
                 endDate: "",
+                description: "",
             },
         ]);
     };
@@ -118,23 +122,20 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
             isValid = false;
         }
 
-        // 날짜 검증
-        const dateError = validateDates(experience.startDate, experience.endDate);
-        if (dateError) {
-            newErrors[`date_${index}`] = dateError;
-            isValid = false;
-        }
-
+        // 시작일
         const startDateError = validateField(experience.startDate, "시작일");
         if (startDateError) {
             newErrors[`startDate_${index}`] = startDateError;
             isValid = false;
         }
 
-        const endDateError = validateField(experience.endDate, "종료일");
-        if (endDateError) {
-            newErrors[`endDate_${index}`] = endDateError;
-            isValid = false;
+        // 날짜 검증 - 둘 다 입력된 경우에만
+        if (experience.startDate && experience.endDate) {
+            const dateError = validateDates(experience.startDate, experience.endDate);
+            if (dateError) {
+                newErrors[`date_${index}`] = dateError;
+                isValid = false;
+            }
         }
 
         setErrors((prev) => ({
@@ -176,6 +177,7 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
                     position: "",
                     startDate: "",
                     endDate: "",
+                    description: "",
                 },
             ]);
             pipe(
@@ -230,6 +232,15 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
             ),
             TE.mapLeft((error) => console.error(error))
         )();
+    };
+
+    const handleDeleteExperience = (id: string) => {
+        if (confirm("경력이 등록된 캐릭터에서도 삭제됩니다. 경력을 삭제하시겠습니까?")) {
+            pipe(
+                deleteExperience(id),
+                TE.mapLeft((error) => console.error(error))
+            )();
+        }
     };
 
     useEffect(() => {
@@ -340,6 +351,23 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
                             {errors[`date_${index}`] && (
                                 <p className="text-sm text-red-500">{errors[`date_${index}`]}</p>
                             )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    설명
+                                </label>
+                                <textarea
+                                    value={experience.description || ""}
+                                    placeholder="설명을 입력하세요"
+                                    onChange={(e) => handleInputChange(index, "description", e.target.value)}
+                                    rows={5}
+                                    className="w-full resize-none px-4 py-2 border rounded-lg focus:outline-none border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                                />
+                                <div className="flex justify-end items-center">
+                                    <span className="w-fit text-sm text-gray-500 dark:text-gray-400">
+                                        {experience.description?.length || 0}/100
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     ))}
                     <div className="flex gap-4">
@@ -441,6 +469,23 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
                                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
                                                 />
                                             </div>
+                                            <div className="col-span-2">
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                    설명
+                                                </label>
+                                                <textarea
+                                                    value={selectedExperience.value.description || ""}
+                                                    onChange={(e) =>
+                                                        handleEditInputChange(
+                                                            selectedExperience.value,
+                                                            "description",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    rows={5}
+                                                    className="w-full resize-none px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                                                />
+                                            </div>
                                         </div>
                                         <div className="flex justify-end gap-2">
                                             <button
@@ -453,7 +498,7 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
                                                 onClick={() => {
                                                     handleUpdateExperience(selectedExperience);
                                                 }}
-                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                                className="px-4 py-2 bg-primary hover:bg-primary-dark text-on-primary rounded-lg transition-colors"
                                             >
                                                 저장
                                             </button>
@@ -478,7 +523,12 @@ export default function ExperiencesTab({ initialData }: ExperiencesTabProps) {
                                                 <FiEdit className="h-5 w-5" />
                                             </button>
                                             <button
-                                                onClick={() => {}}
+                                                onClick={() => {
+                                                    handleDeleteExperience(experience.id);
+                                                    setExperiences(
+                                                        experiences.filter((exp) => exp.id !== experience.id)
+                                                    );
+                                                }}
                                                 className="text-red-500 hover:text-red-600 transition-colors"
                                             >
                                                 <FiTrash2 className="h-5 w-5" />

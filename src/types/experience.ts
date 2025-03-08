@@ -12,15 +12,26 @@ interface Experience {
     endDate: string;
 }
 
-type ExperienceCreateRequest = Pick<Experience, "companyName" | "position" | "startDate" | "endDate" | "sequence">;
-type ExperienceUpdateRequest = Pick<Experience, "companyName" | "position" | "startDate" | "endDate" | "sequence"> & {
+type ExperienceCreateRequest = Pick<
+    Experience,
+    "companyName" | "position" | "startDate" | "endDate" | "sequence" | "description"
+>;
+type ExperienceUpdateRequest = Pick<
+    Experience,
+    "companyName" | "position" | "startDate" | "endDate" | "sequence" | "description"
+> & {
     id: string;
 };
 
 const createExperience = (request: ExperienceCreateRequest[]): TE.TaskEither<Error, void> =>
     TE.tryCatch(
         async () => {
-            await api.post<void>("/experiences", { experiences: request });
+            await api.post<void>("/experiences", {
+                experiences: request.map((exp) => ({
+                    ...exp,
+                    endDate: exp.endDate ? new Date(exp.endDate).toISOString() : null,
+                })),
+            });
         },
         (error) => new Error("Failed to create experience")
     );
@@ -51,5 +62,13 @@ const updateExperience = (request: ExperienceUpdateRequest): TE.TaskEither<Error
         (error) => new Error("Failed to update experience")
     );
 
+const deleteExperience = (id: string): TE.TaskEither<Error, void> =>
+    TE.tryCatch(
+        async () => {
+            await api.delete<void>(`/experiences/${id}`);
+        },
+        (error) => new Error("Failed to delete experience")
+    );
+
 export type { Experience, ExperienceCreateRequest, ExperienceUpdateRequest };
-export { createExperience, listExperiences, updateExperience, createExperienceInCharacter };
+export { createExperience, listExperiences, updateExperience, createExperienceInCharacter, deleteExperience };
