@@ -95,7 +95,7 @@ export const ResumeForm: FC<ResumeFormProps> = ({ register, control, errors }) =
                                                 const { fileUrl } = file;
                                                 onChange(fileUrl);
                                             }}
-                                            accept=".pdf,.doc,.docx,.md"
+                                            accept=".pdf"
                                         />
                                     );
                                 }}

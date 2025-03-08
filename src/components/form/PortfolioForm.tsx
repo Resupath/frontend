@@ -88,7 +88,7 @@ export const PortfolioForm: FC<PortfolioFormProps> = ({ register, control, error
                                                 const { fileUrl } = file;
                                                 onChange(fileUrl);
                                             }}
-                                            accept=".pdf,.doc,.docx,.md"
+                                            accept=".pdf"
                                         />
                                     );
                                 }}

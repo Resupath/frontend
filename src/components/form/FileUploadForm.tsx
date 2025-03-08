@@ -123,7 +123,11 @@ export const FileUploadForm: FC<FileUploadFormProps> = ({ onChange, accept = ".p
                                 하거나 드래그하여 업로드
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                PDF, DOC, DOCX, MD (최대 10MB)
+                                {accept
+                                    .split(",")
+                                    .map((ext) => ext.toUpperCase())
+                                    .join(", ")}{" "}
+                                (최대 10MB)
                             </p>
                         </div>
                     )}
