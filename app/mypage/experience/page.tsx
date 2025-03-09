@@ -1,6 +1,6 @@
 import { MyPageNavigate } from "@/src/components/mypage/MyPageNavigate";
 import { Suspense } from "react";
-import { ProfileSkeleton } from "../page";
+import { ProfileSkeleton } from "@/src/components/skeleton/ProfileSkeleton";
 import { ExperienceContainer } from "@/src/components/mypage/ExperienceContainer";
 
 export default function MyPage() {
