@@ -28,6 +28,7 @@ export default function Home() {
             ),
             TE.mapLeft((error) => {
                 addAlert("노션 인증 실패", "error");
+                router.push("/mypage");
                 return error;
             }),
             TE.map((response) => {
@@ -39,7 +40,10 @@ export default function Home() {
 
     const sendAuthCode = (code: string) =>
         TE.tryCatch(
-            () => api.get("/auth/notion/callback", { params: { code } }),
+            () =>
+                api.get("/auth/notion/link", {
+                    params: { code, redirectUri: window.location.origin + "/notion/success" },
+                }),
             (error) => new Error("토큰 요청 실패")
         );
 

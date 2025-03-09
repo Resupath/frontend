@@ -1,28 +1,8 @@
 import { MyPageNavigate } from "@/src/components/mypage/MyPageNavigate";
-import ProfileTab from "@/src/components/mypage/ProfileTab";
-import { api } from "@/src/utils/api";
-import { cookies } from "next/headers";
+import { ProfileTabContainer } from "@/src/components/mypage/ProfileTabContainer";
+import { Suspense } from "react";
 
 export default async function MyPage() {
-    const cookieStore = await cookies();
-    const auth = cookieStore.get("auth");
-
-    const getMyInfoInServerSide = async () => {
-        try {
-            const memberInfo = await api.get("/members/info", {
-                headers: {
-                    "X-Member": `Bearer ${auth?.value}`,
-                },
-            });
-            return memberInfo.data;
-        } catch (error) {
-            console.error(error);
-            return null;
-        }
-    };
-
-    const memberInfo = await getMyInfoInServerSide();
-
     return (
         <main className="w-full h-full overflow-y-auto">
             <div className="container mx-auto px-4 py-8">
@@ -32,11 +12,38 @@ export default async function MyPage() {
                     <div>
                         <MyPageNavigate />
                         <div className="rounded-xl">
-                            <ProfileTab initialData={memberInfo} />
+                            <Suspense fallback={<ProfileSkeleton />}>
+                                <ProfileTabContainer />
+                            </Suspense>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
+    );
+}
+
+export function ProfileSkeleton() {
+    return (
+        <div className="animate-pulse">
+            <div className="flex items-center space-x-4">
+                {/* 프로필 이미지 스켈레톤 */}
+                <div className="w-20 h-20 bg-gray-200 rounded-full" />
+
+                <div className="space-y-3 flex-1">
+                    {/* 이름 스켈레톤 */}
+                    <div className="h-4 bg-gray-200 rounded w-1/4" />
+                    {/* 이메일 스켈레톤 */}
+                    <div className="h-3 bg-gray-200 rounded w-1/2" />
+                </div>
+            </div>
+
+            {/* 추가 정보 스켈레톤 */}
+            <div className="mt-6 space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+                <div className="h-4 bg-gray-200 rounded w-2/3" />
+                <div className="h-4 bg-gray-200 rounded w-1/2" />
+            </div>
+        </div>
     );
 }

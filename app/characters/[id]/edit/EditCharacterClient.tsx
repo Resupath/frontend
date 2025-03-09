@@ -35,26 +35,24 @@ const CharacterDefaultSchema = z.object({
     isPublic: z.boolean(),
     image: z.string().url("올바른 URL 형식이 아닙니다").nullable(),
     personalities: z.array(InputFieldSchema).min(1, "한개 이상의 성격을 선택해주세요."),
-    experiences: z
-        .array(
-            z.object({
-                id: z.string(),
-                companyName: z.string(),
-                position: z.string(),
-                startDate: z.string(),
-                endDate: z.string(),
-                description: z.string().nullable(),
-                sequence: z.number(),
-            })
-        )
-        .min(1, "한개 이상의 경험을 선택해주세요."),
+    experiences: z.array(
+        z.object({
+            id: z.string(),
+            companyName: z.string(),
+            position: z.string(),
+            startDate: z.string(),
+            endDate: z.string(),
+            description: z.string().nullable(),
+            sequence: z.number(),
+        })
+    ),
     positions: z.array(InputFieldSchema).min(1, "한개 이상의 포지션을 입력해주세요."),
     skills: z.array(InputFieldSchema).min(1, "한개 이상의 스킬을 입력해주세요."),
 });
 
 const SourceFieldSchema = z.object({
     id: z.string(),
-    type: z.enum(["file", "link"]),
+    type: z.enum(["file", "link", "notion"]),
     subtype: z.enum(["resume", "portfolio"]),
     url: z.string().url("올바른 URL 형식이 아닙니다"),
 });
@@ -186,11 +184,18 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
             const resumes = initialCharacter.sources.filter((s) => s.subtype === "resume");
             const portfolios = initialCharacter.sources.filter((s) => s.subtype === "portfolio");
 
+            const isNotionUrl = (url: string): boolean => {
+                if (!url) return false;
+
+                const notionUrlPattern = /^https:\/\/(www\.)?(notion\.(so|site))/;
+                return notionUrlPattern.test(url);
+            };
+
             resumeSetValue(
                 "resumes",
                 resumes.map((r) => ({
                     id: r.id,
-                    type: r.type,
+                    type: isNotionUrl(r.url) ? "notion" : r.type,
                     subtype: "resume" as const,
                     url: r.url,
                 }))
@@ -200,7 +205,7 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
                 "portfolios",
                 portfolios.map((p) => ({
                     id: p.id,
-                    type: p.type,
+                    type: isNotionUrl(p.url) ? "notion" : p.type,
                     subtype: "portfolio" as const,
                     url: p.url,
                 }))
@@ -307,7 +312,7 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
             positions: defaultWatch("positions").map((p) => ({ keyword: p.keyword })),
             skills: defaultWatch("skills").map((s) => ({ keyword: s.keyword })),
             sources: [...resumeGetValues("resumes"), ...portfolioGetValues("portfolios")].map((s) => ({
-                type: s.type,
+                type: s.type == "notion" || s.type == "link" ? "link" : s.type,
                 subtype: s.subtype,
                 url: s.url,
             })),
@@ -487,12 +492,7 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
                     {/* 경력 선택 */}
                     <div id="experiences" className="rounded-lg p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">
-                                경력
-                                <span className="ml-2 font-normal px-2 py-0.5 text-sm rounded-full bg-[#E5F6E8] dark:bg-green-900/30 text-[#2F9B4E] dark:text-green-400">
-                                    필수
-                                </span>
-                            </h2>
+                            <h2 className="text-xl font-semibold">경력</h2>
                         </div>
 
                         <div className="mt-4 flex gap-4">

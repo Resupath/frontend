@@ -16,7 +16,7 @@ function checkNotionUrl(url: string): boolean {
 const notionLogin = (): TE.TaskEither<Error, string> =>
     TE.tryCatch(
         async () => {
-            const response = await api.get("/auth/notion");
+            const response = await api.get("/auth/notion?redirectUri=" + window.location.origin + "/notion/success");
             return response.data;
         },
         (error) => new Error("Failed to login to notion")

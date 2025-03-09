@@ -1,11 +1,17 @@
 import * as TE from "fp-ts/TaskEither";
 import { api } from "../utils/api";
 
-const notionVerify = (): TE.TaskEither<boolean, boolean> =>
+export interface VerifyPageResponse {
+    id: string;
+    title: string;
+    url: string;
+}
+
+const notionVerify = (): TE.TaskEither<boolean, VerifyPageResponse[]> =>
     TE.tryCatch(
         async () => {
-            const response = await api.get<boolean>("/auth/notion/verify");
-            return true;
+            const response = await api.get<VerifyPageResponse[]>("/auth/notion/verify");
+            return response.data || [];
         },
         (error) => {
             return false;

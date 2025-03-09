@@ -1,6 +1,6 @@
 interface Source {
     id: string;
-    type: "file" | "link";
+    type: "file" | "link" | "notion";
     subtype: string;
     url: string;
     createdAt: string;

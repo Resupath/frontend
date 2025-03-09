@@ -1,9 +1,13 @@
 import { SourceArrayRequiredForm } from "@/app/characters/create/page";
-import React, { FC } from "react";
+import React, { FC, useEffect, useState } from "react";
 
 import { useFieldArray, UseFormRegister, Control, FieldErrors, useWatch, Controller } from "react-hook-form";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { FileUploadForm } from "./FileUploadForm";
+import { notionVerify, VerifyPageResponse } from "@/src/types/auth";
+
+import * as TE from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/lib/function";
 
 interface ResumeFormProps {
     register: UseFormRegister<SourceArrayRequiredForm>;
@@ -22,6 +26,21 @@ export const ResumeForm: FC<ResumeFormProps> = ({ register, control, errors }) =
         name: "resumes",
     });
     const resumes = useWatch({ control, name: "resumes" });
+
+    console.log(resumes);
+
+    const [notionVerifyInfo, setNotionVerifyInfo] = useState<VerifyPageResponse[]>([]);
+
+    const asyncNotionVerify = () =>
+        pipe(
+            notionVerify(),
+            TE.map((notionVerify) => setNotionVerifyInfo(notionVerify)),
+            TE.mapLeft((error) => setNotionVerifyInfo([]))
+        )();
+
+    useEffect(() => {
+        asyncNotionVerify();
+    }, []);
 
     return (
         <div className="p-6">
@@ -68,6 +87,7 @@ export const ResumeForm: FC<ResumeFormProps> = ({ register, control, errors }) =
                                         >
                                             <option value="file">파일</option>
                                             <option value="link">링크</option>
+                                            <option value="notion">노션 링크</option>
                                         </select>
                                     );
                                 }}
@@ -84,7 +104,7 @@ export const ResumeForm: FC<ResumeFormProps> = ({ register, control, errors }) =
                             )}
                         </div>
 
-                        {resumes[index]?.type === "file" ? (
+                        {resumes[index]?.type === "file" && (
                             <Controller
                                 control={control}
                                 name={`resumes.${index}.url`}
@@ -100,12 +120,32 @@ export const ResumeForm: FC<ResumeFormProps> = ({ register, control, errors }) =
                                     );
                                 }}
                             />
-                        ) : (
-                            <input
-                                {...register(`resumes.${index}.url`)}
-                                placeholder="URL을 입력하세요"
-                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
-                            />
+                        )}
+
+                        {resumes[index]?.type === "link" && (
+                            <div className="space-y-2 flex gap-2 items-center">
+                                <input
+                                    {...register(`resumes.${index}.url`)}
+                                    placeholder="URL을 입력하세요"
+                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none  dark:bg-gray-700"
+                                />
+                            </div>
+                        )}
+
+                        {resumes[index]?.type === "notion" && (
+                            <div className="space-y-2 flex gap-2 items-center">
+                                <select
+                                    {...register(`resumes.${index}.url`)}
+                                    value={resumes[index]?.url}
+                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none  dark:bg-gray-700"
+                                >
+                                    {notionVerifyInfo.map((info) => (
+                                        <option key={info.id} value={info.url}>
+                                            {info.title} 페이지
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         )}
 
                         {errors?.resumes?.[index]?.url && (

@@ -42,26 +42,24 @@ const CharacterDefaultSchema = z.object({
     image: z.string().url("올바른 URL 형식이 아닙니다").nullable(),
 
     personalities: z.array(InputFieldSchema).min(1, "한개 이상의 성격을 선택해주세요."),
-    experiences: z
-        .array(
-            z.object({
-                id: z.string(),
-                companyName: z.string(),
-                position: z.string(),
-                startDate: z.string(),
-                endDate: z.string(),
-                description: z.string().nullable(),
-                sequence: z.number(),
-            })
-        )
-        .min(1, "한개 이상의 경험을 선택해주세요."),
+    experiences: z.array(
+        z.object({
+            id: z.string(),
+            companyName: z.string(),
+            position: z.string(),
+            startDate: z.string(),
+            endDate: z.string(),
+            description: z.string().nullable(),
+            sequence: z.number(),
+        })
+    ),
     positions: z.array(InputFieldSchema).min(1, "한개 이상의 포지션을 입력해주세요."),
     skills: z.array(InputFieldSchema).min(1, "한개 이상의 스킬을 입력해주세요."),
 });
 
 const SourceFieldSchema = z.object({
     id: z.string(),
-    type: z.enum(["file", "link"]),
+    type: z.enum(["file", "link", "notion"]),
     subtype: z.enum(["resume", "portfolio"]),
     url: z.string().url("올바른 URL 형식이 아닙니다"),
 });
@@ -238,7 +236,7 @@ export default function CreateCharacterPage() {
             positions: defaultWatch("positions").map((p) => ({ keyword: p.keyword })),
             skills: defaultWatch("skills").map((s) => ({ keyword: s.keyword })),
             sources: [...resumeGetValues("resumes"), ...portfolioGetValues("portfolios")].map((s) => ({
-                type: s.type,
+                type: s.type == "notion" || s.type == "link" ? "link" : s.type,
                 subtype: s.subtype,
                 url: s.url,
             })),
@@ -303,7 +301,10 @@ export default function CreateCharacterPage() {
     };
 
     const addNewExperience = (request: Omit<ExperienceCreateRequest, "sequence">) => {
-        if (!(request.companyName && request.position && request.startDate && request.endDate)) return;
+        if (!(request.companyName && request.position && request.startDate)) {
+            addAlert("회사명, 직책, 시작일을 입력해주세요.", "error");
+            return;
+        }
 
         pipe(
             createExperienceInCharacter([{ ...request, sequence: experiences.length }]),
@@ -489,12 +490,7 @@ export default function CreateCharacterPage() {
                     {/* 경력 선택 */}
                     <div id="experiences" className="rounded-lg p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">
-                                경력
-                                <span className="ml-2 font-normal px-2 py-0.5 text-sm rounded-full bg-[#E5F6E8] dark:bg-green-900/30 text-[#2F9B4E] dark:text-green-400">
-                                    필수
-                                </span>
-                            </h2>
+                            <h2 className="text-xl font-semibold">경력</h2>
                         </div>
 
                         {/* 직접 입력 폼 추가 */}
@@ -560,6 +556,23 @@ export default function CreateCharacterPage() {
                                                     setNewExperiences((prev) => ({ ...prev, endDate: e.target.value }))
                                                 }
                                                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                설명
+                                            </label>
+                                            <textarea
+                                                value={newExperiences.description || ""}
+                                                onChange={(e) =>
+                                                    setNewExperiences((prev) => ({
+                                                        ...prev,
+                                                        description: e.target.value,
+                                                    }))
+                                                }
+                                                rows={3}
+                                                placeholder="설명을 입력하세요"
+                                                className={`w-full px-4 resize-none py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
                                             />
                                         </div>
                                     </div>
