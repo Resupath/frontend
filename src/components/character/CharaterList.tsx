@@ -172,13 +172,8 @@ export const CharacterList: FC<{ initialCharacters: Pagination<Character> }> = (
                                 <span className="text-sm text-gray-500 dark:text-gray-400">새 캐릭터 추가</span>
                             </div>
                         </div>
-                        {characters.data.map((character: Character, index: number) => (
-                            <CharacterCard
-                                key={character.id}
-                                character={character}
-                                onClick={handleCharacterClick}
-                                isNew={index >= characters.data.length - 4}
-                            />
+                        {characters.data.map((character: Character) => (
+                            <CharacterCard key={character.id} character={character} onClick={handleCharacterClick} />
                         ))}
                     </div>
                     <div className="mt-auto">

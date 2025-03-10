@@ -18,7 +18,7 @@ export default function MyCharacterList({ initialData }: MyCharacterListProps) {
     };
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto h-full flex flex-col">
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                     <button
@@ -37,7 +37,13 @@ export default function MyCharacterList({ initialData }: MyCharacterListProps) {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+                style={{
+                    flex: 1,
+                    gridAutoRows: "300px",
+                }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-6 basis-0 overflow-y-auto"
+            >
                 <div
                     role="button"
                     onClick={handleCreateClick}

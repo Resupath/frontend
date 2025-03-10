@@ -7,7 +7,7 @@ import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/TaskEither";
 import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiImage, FiAlertCircle } from "react-icons/fi";
 
-import { Character, CharacterCreateRequest, updateCharacter } from "@/src/types/character";
+import { Character, CharacterCreateRequest, updateCharacter, deleteCharacter } from "@/src/types/character";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -34,6 +34,7 @@ const CharacterDefaultSchema = z.object({
     nickname: z.string().min(2, "닉네임은 2자 이상 입력해주세요"),
     isPublic: z.boolean(),
     image: z.string().url("올바른 URL 형식이 아닙니다").nullable(),
+    description: z.string(),
     personalities: z.array(InputFieldSchema).min(1, "한개 이상의 성격을 선택해주세요."),
     experiences: z.array(
         z.object({
@@ -98,6 +99,7 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
             image: null,
             personalities: [],
             experiences: [],
+            description: "",
             positions: [{ id: Date.now().toString(), keyword: "" }],
             skills: [{ id: Date.now().toString(), keyword: "" }],
         },
@@ -165,6 +167,7 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
             setTempSelectedPersonalities(initialCharacter.personalities);
             defaultSetValue("experiences", initialCharacter.experiences);
             setTempSelectedExperiences(initialCharacter.experiences);
+            defaultSetValue("description", initialCharacter.description);
             defaultSetValue(
                 "positions",
                 initialCharacter.positions.map((p) => ({
@@ -306,6 +309,7 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
         const request: CharacterCreateRequest = {
             nickname: defaultWatch("nickname"),
             isPublic: defaultWatch("isPublic"),
+            description: defaultWatch("description"),
             image: image,
             personalities: tempSelectedPersonalities.map((p) => ({ id: p.id })),
             experiences: tempSelectedExperiences.map((e) => ({ id: e.id })),
@@ -328,6 +332,24 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
                 addAlert("캐릭터 수정에 실패했습니다.", "error");
             })
         )();
+    };
+
+    // 삭제 핸들러 추가
+    const handleDelete = () => {
+        if (confirm("정말로 이 캐릭터를 삭제하시겠습니까?")) {
+            pipe(
+                deleteCharacter(initialCharacter.id),
+                TE.map(() => {
+                    // router.push("/characters");
+                    router.back();
+                    addAlert("캐릭터가 삭제되었습니다.", "success");
+                }),
+                TE.mapLeft((error) => {
+                    console.error(error);
+                    addAlert("캐릭터 삭제에 실패했습니다.", "error");
+                })
+            )();
+        }
     };
 
     return (
@@ -630,19 +652,42 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
                     <div id="portfolio-section" />
                     <PortfolioForm register={portfolioRegister} control={portfolioControl} errors={portfolioErrors} />
 
-                    <div className="flex justify-end gap-4">
+                    <div id="description-section" className="p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold">
+                                그 외에 캐릭터에서 반드시 가르치고 싶은 내용이 있나요?
+                            </h2>
+                        </div>
+                        <textarea
+                            value={defaultWatch("description") || ""}
+                            {...defaultRegister("description")}
+                            placeholder="캐릭터에서 반드시 가르치고 싶은 내용을 입력하세요"
+                            rows={5}
+                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700 resize-none`}
+                        />
+                    </div>
+
+                    <div className="flex justify-between gap-4">
                         <button
-                            onClick={() => router.back()}
-                            className="px-4 py-2 text-gray-600 hover:text-gray-700 transition-colors"
+                            onClick={handleDelete}
+                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
                         >
-                            취소
+                            삭제
                         </button>
-                        <button
-                            onClick={handleSubmit}
-                            className="px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
-                        >
-                            수정
-                        </button>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => router.back()}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-700 transition-colors"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleSubmit}
+                                className="px-4 py-2 bg-primary text-on-primary rounded-lg transition-colors"
+                            >
+                                수정
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

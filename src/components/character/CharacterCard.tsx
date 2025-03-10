@@ -5,14 +5,16 @@ import { FiUser, FiUserCheck, FiStar } from "react-icons/fi";
 interface CharacterCardProps {
     character: Character;
     onClick: (character: Character) => void;
-    isNew?: boolean;
 }
 
-export default function CharacterCard({ character, onClick, isNew = false }: CharacterCardProps) {
+export default function CharacterCard({ character, onClick }: CharacterCardProps) {
     const position = character.positions[0];
     const { user } = useAuthStore();
 
+    const isNew = character.createdAt > new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString();
+
     const isOwner = user?.id === character.memberId;
+
     return (
         <div
             onClick={() => onClick(character)}

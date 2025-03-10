@@ -23,6 +23,7 @@ interface Character {
     experiences: Experience[];
     experienceYears: number;
     roomCount: number;
+    description: string;
 }
 
 interface CharacterCreateRequest {
@@ -34,6 +35,7 @@ interface CharacterCreateRequest {
     positions: { keyword: string }[];
     skills: { keyword: string }[];
     sources: SourceCreateRequest[];
+    description: string;
 }
 
 const createCharacter = (request: CharacterCreateRequest): TE.TaskEither<Error, void> =>
@@ -85,6 +87,14 @@ const listMyCharacters = (page?: number): TE.TaskEither<Error, Pagination<Charac
         (error) => new Error("Failed to fetch characters")
     );
 
+const deleteCharacter = (id: string): TE.TaskEither<Error, void> =>
+    TE.tryCatch(
+        async () => {
+            await api.delete<void>(`/characters/${id}`, { showLoading: true });
+        },
+        (error) => new Error("Failed to delete character")
+    );
+
 export type { Character, CharacterCreateRequest };
 
-export { listCharacters, createCharacter, listMyCharacters, retrieveCharacter, updateCharacter };
+export { listCharacters, createCharacter, listMyCharacters, retrieveCharacter, updateCharacter, deleteCharacter };

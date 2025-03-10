@@ -26,7 +26,7 @@ export default async function CharactersPage() {
     const charactersData = await getCharactersInServerSide();
 
     return (
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-8 h-full">
             <MyCharacterList initialData={charactersData} />
         </main>
     );

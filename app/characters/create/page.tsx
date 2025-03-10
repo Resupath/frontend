@@ -25,6 +25,7 @@ import { ResumeForm } from "@/src/components/form/ResumeForm";
 import { PortfolioForm } from "@/src/components/form/PortfolioForm";
 import { CharacterCreateRequest, createCharacter } from "@/src/types/character";
 import { useAuthStore } from "@/src/stores/useAuthStore";
+import { SearchInput } from "@/src/components/search/SearchInput";
 
 interface InputField {
     id: string;
@@ -40,7 +41,7 @@ const CharacterDefaultSchema = z.object({
     nickname: z.string().min(2, "닉네임은 2자 이상 입력해주세요"),
     isPublic: z.boolean(),
     image: z.string().url("올바른 URL 형식이 아닙니다").nullable(),
-
+    description: z.string(),
     personalities: z.array(InputFieldSchema).min(1, "한개 이상의 성격을 선택해주세요."),
     experiences: z.array(
         z.object({
@@ -228,6 +229,7 @@ export default function CreateCharacterPage() {
         }
 
         const request: CharacterCreateRequest = {
+            description: defaultWatch("description"),
             nickname: defaultWatch("nickname"),
             isPublic: defaultWatch("isPublic"),
             image: image,
@@ -310,6 +312,7 @@ export default function CreateCharacterPage() {
             createExperienceInCharacter([{ ...request, sequence: experiences.length }]),
             TE.map((response) => {
                 setExperiences([...experiences, ...response]);
+                setTempSelectedExperiences((prev) => [...prev, ...response]);
                 defaultSetValue("experiences", [...defaultWatch("experiences"), ...response], {
                     shouldValidate: true,
                     shouldDirty: true,
@@ -692,6 +695,13 @@ export default function CreateCharacterPage() {
                                 <FiPlus className="h-5 w-5" />
                             </button>
                         </div>
+
+                        {/* <SearchInput
+                            apiType="skill"
+                            onSelect={(value) => {
+                                console.log(value);
+                            }}
+                        /> */}
                         <div className="space-y-3">
                             {defaultWatch("skills").map((skill, index) => (
                                 <div key={skill.id} className="space-y-1">
@@ -729,6 +739,21 @@ export default function CreateCharacterPage() {
                     <ResumeForm register={resumeRegister} control={resumeControl} errors={resumeErrors} />
                     <div id="portfolio-section" />
                     <PortfolioForm register={portfolioRegister} control={portfolioControl} errors={portfolioErrors} />
+
+                    <div id="description-section" className="p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold">
+                                그 외에 캐릭터에서 반드시 가르치고 싶은 내용이 있나요?
+                            </h2>
+                        </div>
+                        <textarea
+                            value={defaultWatch("description")}
+                            {...defaultRegister("description")}
+                            placeholder="캐릭터에서 반드시 가르치고 싶은 내용을 입력하세요"
+                            rows={5}
+                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700 resize-none`}
+                        />
+                    </div>
                     <div className="flex justify-end gap-4">
                         <button
                             onClick={() => router.back()}

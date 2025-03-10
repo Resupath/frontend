@@ -7,6 +7,7 @@ import { createChat } from "@/src/types/chat";
 import { pipe } from "fp-ts/function";
 import { RoomWithCharacter } from "@/src/types/room";
 import * as TE from "fp-ts/TaskEither";
+import { SimpleMarkdownViewer } from "./SimpleMarkdownViewer";
 
 interface ChatRoomClientProps {
     initialChats: Chat[];
@@ -137,13 +138,12 @@ export function ChatRoomClient({ initialChats, roomInfo, roomId }: ChatRoomClien
                                         : "bg-[#F2FBFB] dark:bg-gray-800 rounded-bl-none"
                                 }`}
                             >
-                                <p
+                                <SimpleMarkdownViewer
+                                    content={chat.message}
                                     className={`text-sm ${
                                         chat.userId ? "text-black dark:text-white" : "text-gray-900 dark:text-gray-100"
                                     }`}
-                                >
-                                    {chat.message}
-                                </p>
+                                />
                                 <span
                                     className={`text-xs mt-1 block ${
                                         chat.userId
