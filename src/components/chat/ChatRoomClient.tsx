@@ -72,8 +72,8 @@ export function ChatRoomClient({ initialChats, roomInfo, roomId, characterDetail
     return (
         <div className="w-full h-full flex">
             {/* 채팅 영역 */}
-            <div className="flex-1 h-full">
-                <div className="h-full flex flex-col mx-auto max-w-4xl">
+            <div className="flex-1 h-full flex">
+                <div className="h-full flex flex-col w-full">
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
                         {roomInfo && (
                             <div className="flex justify-start items-end gap-2">
@@ -233,7 +233,7 @@ export function ChatRoomClient({ initialChats, roomInfo, roomId, characterDetail
             </div>
 
             {/* 캐릭터 정보 사이드바 */}
-            <div className="w-[400px] h-full border-l border-gray-200 dark:border-gray-700 overflow-y-auto">
+            <div className="w-[500px] h-full border-l border-gray-200 dark:border-gray-700 overflow-y-auto">
                 <div className="p-6">
                     <div className="flex items-center gap-6 mb-8">
                         <div className="flex-shrink-0">
