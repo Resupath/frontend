@@ -8,6 +8,7 @@ import { pipe } from "fp-ts/lib/function";
 import { useLoginModalStore } from "@/src/stores/useLoginModalStore";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 import { FaGoogle, FaGithub, FaLinkedin } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 import * as TE from "fp-ts/TaskEither";
 import AlertModal from "../modal/AlertModal";
@@ -21,6 +22,7 @@ import { Logo } from "../logo/Logo";
  **/
 
 export const Global: FC<{}> = () => {
+    const router = useRouter();
     const { setAuth, user } = useAuthStore();
     const { isOpen, setIsOpen } = useLoginModalStore();
     const { addAlert } = useAlertStore();
@@ -118,7 +120,15 @@ export const Global: FC<{}> = () => {
                         </button>
 
                         <div className="flex flex-row-reverse mt-16 mb-8 gap-2">
-                            <span className="text-gray-500 text-sm hover:underline">개인정보처리방침</span>
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    router.push(`/privacy`);
+                                }}
+                                className="text-gray-500 text-sm hover:underline"
+                            >
+                                개인정보처리방침
+                            </button>
                         </div>
                     </div>
                 </Modal.Body>
