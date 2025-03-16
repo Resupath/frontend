@@ -18,7 +18,6 @@ interface ChatRoomClientProps {
 }
 
 export function ChatRoomClient({ initialChats, roomInfo, roomId, characterDetail }: ChatRoomClientProps) {
-    console.log(characterDetail, "characterDetail");
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [chats, setChats] = useState<Chat[]>(initialChats);

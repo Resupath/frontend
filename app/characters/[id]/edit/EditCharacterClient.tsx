@@ -6,6 +6,7 @@ import { api } from "@/src/utils/api";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/TaskEither";
 import { FiArrowLeft, FiPlus, FiTrash2, FiCheck, FiImage, FiAlertCircle } from "react-icons/fi";
+import { RxCross2 } from "react-icons/rx";
 
 import { Character, CharacterCreateRequest, updateCharacter, deleteCharacter } from "@/src/types/character";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,7 @@ import { Experience, listExperiences } from "@/src/types/experience";
 import { ResumeForm } from "@/src/components/form/ResumeForm";
 import { PortfolioForm } from "@/src/components/form/PortfolioForm";
 import { uploadFile } from "@/src/types/file";
+import { SearchInput } from "@/src/components/search/SearchInput";
 
 interface EditCharacterClientProps {
     initialCharacter: Character;
@@ -560,37 +562,30 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
                                     필수
                                 </span>
                             </h2>
-                            <button
-                                onClick={() => appendPositions({ id: Date.now().toString(), keyword: "" })}
-                                className="text-primary transition-colors"
-                            >
-                                <FiPlus className="h-5 w-5" />
-                            </button>
                         </div>
-                        <div className="space-y-3">
+
+                        <div className="mb-4">
+                            <SearchInput
+                                apiType="position"
+                                onSelect={(value) => {
+                                    appendPositions({ id: Date.now().toString(), keyword: value });
+                                }}
+                            />
+                        </div>
+
+                        <div className="flex flex-row gap-2 flex-wrap">
                             {defaultWatch("positions").map((position, index) => (
-                                <div key={position.id} className="space-y-1">
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            {...defaultRegister(`positions.${index}.keyword`)}
-                                            placeholder="포지션을 입력하세요"
-                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
-                                        />
-                                        {defaultWatch("positions").length > 1 && (
-                                            <button
-                                                onClick={() => removePositions(index)}
-                                                className="text-red-500 hover:text-red-600 transition-colors"
-                                            >
-                                                <FiTrash2 className="h-5 w-5" />
-                                            </button>
-                                        )}
-                                    </div>
-                                    {defaultErrors.positions?.[index]?.keyword && (
-                                        <p className="text-sm mt-2 text-red-500">
-                                            {defaultErrors.positions?.[index]?.keyword?.message}
-                                        </p>
-                                    )}
+                                <div
+                                    key={position.id}
+                                    className="flex gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg p-2"
+                                >
+                                    <p>{position.keyword}</p>
+                                    <button
+                                        onClick={() => removePositions(index)}
+                                        className="text-text hover:text-red-600 transition-colors"
+                                    >
+                                        <RxCross2 className="text-sm" />
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -608,37 +603,27 @@ export default function EditCharacterClient({ initialCharacter }: EditCharacterC
                                     필수
                                 </span>
                             </h2>
-                            <button
-                                onClick={() => appendSkills({ id: Date.now().toString(), keyword: "" })}
-                                className="text-primary transition-colors"
-                            >
-                                <FiPlus className="h-5 w-5" />
-                            </button>
                         </div>
-                        <div className="space-y-3">
+
+                        <div className="mb-4">
+                            <SearchInput
+                                apiType="skill"
+                                onSelect={(value) => {
+                                    appendSkills({ id: Date.now().toString(), keyword: value });
+                                }}
+                            />
+                        </div>
+
+                        <div className="flex flex-row gap-2 flex-wrap">
                             {defaultWatch("skills").map((skill, index) => (
-                                <div key={skill.id} className="space-y-1">
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            {...defaultRegister(`skills.${index}.keyword`)}
-                                            placeholder="스킬을 입력하세요"
-                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none bg-gray-50 dark:bg-gray-700`}
-                                        />
-                                        {defaultWatch("skills").length > 1 && (
-                                            <button
-                                                onClick={() => removeSkills(index)}
-                                                className="text-red-500 hover:text-red-600 transition-colors"
-                                            >
-                                                <FiTrash2 className="h-5 w-5" />
-                                            </button>
-                                        )}
-                                    </div>
-                                    {defaultErrors.skills?.[index]?.keyword && (
-                                        <p className="text-sm mt-2 text-red-500">
-                                            {defaultErrors.skills?.[index]?.keyword?.message}
-                                        </p>
-                                    )}
+                                <div key={skill.id} className="flex gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+                                    <p>{skill.keyword}</p>
+                                    <button
+                                        onClick={() => removeSkills(index)}
+                                        className="text-text hover:text-red-600 transition-colors"
+                                    >
+                                        <RxCross2 className="text-sm" />
+                                    </button>
                                 </div>
                             ))}
                         </div>
