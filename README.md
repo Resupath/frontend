@@ -3,7 +3,7 @@
 면시(면접시뮬레이터)는 AI 기반 캐릭터를 통해 면접을 돕는 애플리케이션입니다.
 
 ## 🎯 문제 상황
-
+```
 대부분의 구직자는 잘 모르는 사실이지만, 면접관들도 면접 전 긴장을 한다.
 
 혹여 내 실수로 좋은 사람을 놓치는 것은 아닐지, 반대로 팀과 맞지 않는 사람을 채용하는 것은 아닐지 걱정한다.
@@ -13,6 +13,7 @@
 하지만 현실적으로 면접 시간 1시간만으로 지원자를 깊이 파악하기란 어렵다.
 
 때로는 한 번 더 면접을 보고 싶은데, 구직자 입장에서는 그 말이 부담스럽게 다가올 수도 있다.
+```
 
 대부분의 구직자는 다음과 같은 자료를 제출합니다.
 
@@ -120,7 +121,17 @@ app/
 ## 💫 화면
 
 ### 메인 화면
+<img width="1440" alt="스크린샷 2025-03-22 오후 3 11 59" src="https://github.com/user-attachments/assets/9551ffcf-2ea3-4728-9067-f2d7f44a2680" />
+<img width="1440" alt="스크린샷 2025-03-22 오후 3 11 47" src="https://github.com/user-attachments/assets/faff6928-7891-4bd5-9591-521e27d1b59f" />
+
+
 
 ### 채팅 화면
+<img width="1440" alt="스크린샷 2025-03-22 오후 3 12 10" src="https://github.com/user-attachments/assets/2e60a56f-2988-4139-88d8-5948dad30603" />
+
 
 ### 캐릭터 생성 화면
+<img width="1440" alt="스크린샷 2025-03-22 오후 3 12 33" src="https://github.com/user-attachments/assets/d3fcd67d-fbee-4fd5-b293-2963cd098afa" />
+<img width="1440" alt="스크린샷 2025-03-22 오후 3 12 26" src="https://github.com/user-attachments/assets/9fcf85ea-0d4a-44a2-b8ca-55dafdc55f73" />
+
+
