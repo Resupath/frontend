@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏆 면시 - AI 기반 면접 시뮬레이터
 
-## Getting Started
+면시(면접시뮬레이터)는 AI 기반 캐릭터를 통해 면접을 돕는 애플리케이션입니다.
 
-First, run the development server:
+## 🎯 문제 상황
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+대부분의 구직자는 잘 모르는 사실이지만, 면접관들도 면접 전 긴장을 한다.
+
+혹여 내 실수로 좋은 사람을 놓치는 것은 아닐지, 반대로 팀과 맞지 않는 사람을 채용하는 것은 아닐지 걱정한다.
+
+이런 고민은 회사에 대한 애정이 커질수록 더 깊어진다.
+
+하지만 현실적으로 면접 시간 1시간만으로 지원자를 깊이 파악하기란 어렵다.
+
+때로는 한 번 더 면접을 보고 싶은데, 구직자 입장에서는 그 말이 부담스럽게 다가올 수도 있다.
+
+대부분의 구직자는 다음과 같은 자료를 제출합니다.
+
+-   자기소개서
+-   이력서
+-   포트폴리오
+-   블로그, 노션, GitHub 링크 등
+
+✅ 이러한 자료들을 AI가 학습하여 지원자의 AI 캐릭터를 생성하고, 이를 활용해 면접을 예행 연습할 수 있다면 어떨까요?
+
+✅ 그리고 이 캐릭터와 대화를 나눈 후, 실제 지원자와 비교하여 평가할 수 있다면?
+
+-   면접관은 AI 캐릭터와 모의 면접을 진행하며 질문을 미리 준비할 수 있다.
+-   구직자는 AI 면접을 통해 자신의 강점과 약점을 분석하고, 실전 면접을 대비할 수 있다.
+-   AI 캐릭터의 답변과 실제 지원자의 답변을 비교하여 평가할 수도 있다.
+
+## 🎯 타겟 유저
+
+-   **면접관**: 지원자의 정보를 미리 검토하고, 효과적인 질문을 준비하고 싶은 사람
+-   **구직자**: 모의 면접을 통해 연습하고, 자신의 프로필을 더 많은 사람에게 알리고 싶은 사람
+-   **인사팀 / 헤드헌터**: 링크드인에서 찾은 인재가 정말 좋은 인재인지 사전 검토하고 싶은 사람
+
+## 🧑‍💻 사용 시나리오
+
+### 면접관
+
+-   면접 대상자의 기본 정보 입력 (이름, 직군 선택)
+-   이력서 & 자기소개서 업로드
+-   GitHub / LinkedIn 링크 추가 → 공개된 데이터 크롤링 & 분석 (선택 사항)
+-   성격 태그 선택 (예: 친절함, 과묵함, 대화형, 논리적, 감성적 등)
+-   AI 캐릭터 생성 후, 면접 시뮬레이션 진행
+
+### 구직자
+
+-   위 과정과 동일하나, 목적이 다름 → 자신의 프로필을 AI 기반으로 보강하고, 면접 제안 받을 기회 확대
+-   AI 면접을 통해 예상 질문을 미리 경험하고, 부족한 점을 보완 가능
+-   대화 로그를 바탕으로 주로 어떤 질문을 받았는지 확인 가능
+
+### 피플팀 / 헤드헌터
+
+-   AI 면접을 통해 사전 검증 후, 유망한 인재에게만 직접 연락 가능
+-   불필요한 DM/미팅을 줄이고, 진짜 적합한 후보에게 집중할 수 있음
+
+## 🌟 주요 기능
+
+### 면접관을 위한 기능
+
+-   구직자 프로필 기반 AI 캐릭터 생성
+-   AI 캐릭터와의 면접 연습
+-   구직자의 답변을 예상 답안과 비교 평가
+-   GitHub, LinkedIn, Notion 등 다양한 소스의 구직자 정보 접근
+
+### 구직자를 위한 기능
+
+-   AI 프로필 생성을 통한 자기 PR
+-   AI 면접관과의 면접 연습
+-   면접 질문과 답변 추적 및 분석
+-   최신화된 전문 프로필 관리
+
+### HR/헤드헌터를 위한 기능
+
+-   AI를 활용한 구직자 사전 평가
+-   공개된 소스의 구직자 정보 접근
+-   AI 면접을 통한 기술력 평가
+-   초기 선별 과정의 시간 절약
+
+## 🛠 기술 스택
+
+-   **프론트엔드**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+-   **UI 컴포넌트**: MUI, Headless UI
+-   **상태 관리**: nuqs (URL 검색 파라미터)
+-   **인증**: OAuth2
+-   **AI 통합**: GPT 기반 캐릭터 생성
+
+## 🚀 시작하기
+
+1. 저장소 클론
+2. 의존성 설치:
+    ```bash
+    npm install
+    ```
+3. 환경 변수 설정:
+    ```bash
+    cp .env.example .env.local
+    ```
+4. 개발 서버 실행:
+    ```bash
+    npm run dev
+    ```
+
+## 📝 프로젝트 구조
+
+```
+app/
+├── api/          # API 라우트
+├── characters/   # 캐릭터 관리
+├── login/        # 인증
+├── mypage/       # 사용자 대시보드
+├── notion/       # Notion 통합
+├── oauth2/       # OAuth2 인증
+├── privacy/      # 개인정보 처리방침
+└── room/         # 면접 채팅방
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 💫 화면
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 메인 화면
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 채팅 화면
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 캐릭터 생성 화면
