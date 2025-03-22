@@ -55,11 +55,23 @@ export default function MyCharacterList({ initialData }: MyCharacterListProps) {
                     </div>
                 </div>
                 {initialData.data.map((character) => (
-                    <CharacterCard
-                        key={character.id}
-                        character={character}
-                        onClick={() => router.push(`/characters/${character.id}/edit`)}
-                    />
+                    <div key={character.id}>
+                        <CharacterCard key={character.id} character={character} onClick={() => {}} />
+                        <button onClick={() => router.push(`/characters/${character.id}/edit`)}>수정</button>
+                        <button
+                            onClick={() => {
+                                const baseURL =
+                                    process.env.NODE_ENV === "development"
+                                        ? process.env.NEXT_PUBLIC_API_URL_DEV
+                                        : process.env.NEXT_PUBLIC_API_URL_PROD;
+
+                                navigator.clipboard.writeText(`${baseURL}/characters/share/${character.id}`);
+                                alert("캐릭터 공유 링크가 클립보드에 복사되었습니다.");
+                            }}
+                        >
+                            공유
+                        </button>
+                    </div>
                 ))}
             </div>
         </div>

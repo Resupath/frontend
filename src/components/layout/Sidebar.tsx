@@ -103,14 +103,6 @@ export const Sidebar: FC<{}> = ({}) => {
 
     return (
         <>
-            {/* {!width && (
-                <button
-                    onClick={() => setWidth(calculateWidth(width > 0))}
-                    className="fixed left-4 top-4 p-2 transition-all duration-300 ease-in-out hover:bg-gray-200 dark:hover:bg-gray-700 dark:border-gray-800"
-                >
-                    <FiChevronsRight />
-                </button>
-            )} */}
             <aside
                 style={{ width: `${width}px` }}
                 className="h-full bg-background flex flex-col transition-all duration-300 ease-in-out overflow-hidden border-r border-gray-300 dark:border-gray-700"
@@ -131,14 +123,6 @@ export const Sidebar: FC<{}> = ({}) => {
                         </svg>
                         <span>면시</span>
                     </button>
-                    {/* <button
-                        onClick={() => {
-                            setWidth(calculateWidth(width > 0));
-                        }}
-                        className="p-2 transition-colors rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 ml-auto"
-                    >
-                        <FiChevronsLeft />
-                    </button> */}
                 </div>
 
                 <div className="flex-[2] overflow-y-auto px-4">

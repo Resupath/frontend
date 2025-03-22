@@ -5,13 +5,21 @@ import { RoomWithCharacter } from "@/src/types/room";
 import { Chat } from "@/src/types/chat";
 import { Character } from "@/src/types/character";
 
+const createHeader = (auth: string, userToken: string) => {
+    const headers: Record<string, string> = {};
+    if (auth) {
+        headers["X-Member"] = `Bearer ${auth}`;
+    }
+    if (userToken) {
+        headers["X-User"] = `Bearer ${userToken}`;
+    }
+    return headers;
+};
+
 async function getRoomInfoInServerSide(roomId: string, auth: string, userToken: string) {
     try {
         const response = await api.get<RoomWithCharacter>(`/rooms/${roomId}`, {
-            headers: {
-                "X-Member": `Bearer ${auth}`,
-                "X-User": `Bearer ${userToken}`,
-            },
+            headers: createHeader(auth, userToken),
         });
         return response.data;
     } catch (error) {
@@ -23,10 +31,7 @@ async function getRoomInfoInServerSide(roomId: string, auth: string, userToken: 
 async function getChatsInServerSide(roomId: string, auth: string, userToken: string) {
     try {
         const response = await api.get<Chat[]>(`/chats/${roomId}`, {
-            headers: {
-                "X-Member": `Bearer ${auth}`,
-                "X-User": `Bearer ${userToken}`,
-            },
+            headers: createHeader(auth, userToken),
         });
         return response.data;
     } catch (error) {
@@ -38,10 +43,7 @@ async function getChatsInServerSide(roomId: string, auth: string, userToken: str
 async function getCharacterInServerSide(characterId: string, auth: string, userToken: string) {
     try {
         const response = await api.get<Character>(`/characters/${characterId}`, {
-            headers: {
-                "X-Member": `Bearer ${auth}`,
-                "X-User": `Bearer ${userToken}`,
-            },
+            headers: createHeader(auth, userToken),
         });
         return response.data;
     } catch (error) {
